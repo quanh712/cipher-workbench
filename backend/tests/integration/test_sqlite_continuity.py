@@ -794,3 +794,26 @@ def test_corrupt_backup_is_rejected_without_touching_separate_target(tmp_path: P
         )
     assert not target.exists()
     assert original.path.exists()
+
+
+def test_live_backup_allows_healthy_bookkeeping_beyond_lock_wait_budget(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Disk/scheduler latency must not consume the separate lock-wait budget."""
+    original = _import(tmp_path / "source.sqlite3", [_row(1)])
+    write_metadata = continuity._write_manifest_metadata
+    real_monotonic = time.monotonic
+    clock_offset = 0.0
+
+    def write_with_elapsed_disk_time(connection, manifest):
+        nonlocal clock_offset
+        write_metadata(connection, manifest)
+        # Model a successful fsync plus descheduling without slowing the suite
+        # or relying on a particular CI disk speed.
+        clock_offset += continuity.BUSY_TIMEOUT_SECONDS + 0.1
+
+    monkeypatch.setattr(continuity, "_write_manifest_metadata", write_with_elapsed_disk_time)
+    monkeypatch.setattr(continuity.time, "monotonic", lambda: real_monotonic() + clock_offset)
+    backup = backup_sqlite_live(original.path, tmp_path / "backup.sqlite3")
+    assert backup.verified
+    assert rows_from_sqlite(backup.path) == (_row(1),)

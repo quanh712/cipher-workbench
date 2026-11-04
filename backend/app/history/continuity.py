@@ -36,6 +36,7 @@ MAX_INT64: Final = 2**63 - 1
 FORMAT_VERSION: Final = "history-continuity-v1"
 REPLACEMENT_CONFIRMATION: Final = "REPLACE_RUNTIME"
 BUSY_TIMEOUT_SECONDS: Final = 0.2
+BACKUP_TIMEOUT_SECONDS: Final = 30.0
 
 HISTORY_COLUMNS: Final = (
     "id",
@@ -1809,7 +1810,7 @@ def backup_sqlite_live(
     expected_manifest_digest: str | None = None,
     source_revision: str | None = None,
     schema_revision: str | None = None,
-    timeout: float = BUSY_TIMEOUT_SECONDS,
+    timeout: float = BACKUP_TIMEOUT_SECONDS,
 ) -> BackupEvidence:
     """Create and verify a new SQLite snapshot with ``Connection.backup()``.
 
@@ -1818,6 +1819,10 @@ def backup_sqlite_live(
     persisted provenance to make that comparison meaningful; it is not required
     for a live database whose row set has advanced since cutover.  The returned
     ``backup_digest`` always belongs to a newly generated destination manifest.
+
+    The whole operation has a separate budget from SQLite lock contention.
+    Healthy disk writes and verification may exceed the short lock-wait budget;
+    a busy source still fails promptly rather than holding an operator for 30s.
     """
 
     if timeout <= 0:
@@ -1841,7 +1846,9 @@ def backup_sqlite_live(
     destination_created = False
     destination_manifest: Manifest | None = None
     try:
-        source_connection = _connect(source, read_only=True, timeout=remaining_backup_time())
+        source_connection = _connect(
+            source, read_only=True, timeout=min(BUSY_TIMEOUT_SECONDS, remaining_backup_time())
+        )
         _check_pragma(source_connection, "quick_check")
         remaining_backup_time()
         _check_pragma(source_connection, "integrity_check")
@@ -1886,14 +1893,27 @@ def backup_sqlite_live(
                 raise VerificationError("optional pre-backup manifest guard failed")
         _ensure_new_file(destination)
         destination_created = True
-        destination_connection = _connect(destination, timeout=remaining_backup_time())
+        destination_connection = _connect(
+            destination, timeout=min(BUSY_TIMEOUT_SECONDS, remaining_backup_time())
+        )
         remaining = remaining_backup_time()
-        busy_timeout_ms = max(0, int(remaining * 1000))
+        busy_timeout_ms = max(0, int(min(BUSY_TIMEOUT_SECONDS, remaining) * 1000))
         source_connection.execute(f"PRAGMA busy_timeout = {busy_timeout_ms}")
         destination_connection.execute(f"PRAGMA busy_timeout = {busy_timeout_ms}")
 
-        def backup_progress(_status: int, _remaining_pages: int, _total_pages: int) -> None:
+        contention_started: float | None = None
+
+        def backup_progress(status: int, _remaining_pages: int, _total_pages: int) -> None:
+            nonlocal contention_started
             remaining_backup_time()
+            if status in {sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED}:
+                now = time.monotonic()
+                if contention_started is None:
+                    contention_started = now
+                elif now - contention_started >= BUSY_TIMEOUT_SECONDS:
+                    raise VerificationError("SQLite backup lock wait exceeded its timeout")
+            else:
+                contention_started = None
 
         try:
             source_connection.backup(
