@@ -39,7 +39,8 @@ async def _database_status(database: Database | None) -> DatabaseStatus:
 )
 async def health(request: Request) -> JSONResponse:
     status = await _database_status(app_database(request.app))
-    history = "enabled" if config.history_api_enabled() else "disabled"
+    history_enabled = config.history_api_enabled() and not request.app.state.public_mode
+    history = "enabled" if history_enabled else "disabled"
     body = HealthResponse(
         success=True, result=HealthResult(app="ok", database=status, history=history)
     )

@@ -1,3 +1,4 @@
+import { HISTORY_TTL } from "../services/browserHistory";
 import { useEffect, useRef, useState } from "react";
 import {
   deleteSignature,
@@ -160,6 +161,18 @@ export function SignatureHistoryDialog({
       });
     return () => controller.abort();
   }, [id, retry]);
+  useEffect(() => {
+    if (!detail) return;
+    const timer = window.setTimeout(
+      () => {
+        setDetail(null);
+        setError("Bản ghi đã hết hạn sau 1 giờ.");
+        onDeleted();
+      },
+      Math.max(0, Date.parse(detail.createdAt) + HISTORY_TTL - Date.now()),
+    );
+    return () => window.clearTimeout(timer);
+  }, [detail, onDeleted]);
   const draft = detail && verificationDraft(detail);
   async function remove() {
     setBusy(true);
@@ -207,7 +220,12 @@ export function SignatureHistoryDialog({
       {detail && (
         <>
           <SignatureDetails detail={detail} />
-          {!draft && <p>Bản ghi này không hỗ trợ điền vào chế độ kiểm tra số nguyên.</p>}
+          {!draft && (
+            <p>
+              Bản ghi này không hỗ trợ điền vào chế độ kiểm tra số nguyên. Với thao tác từ file, hãy
+              chọn lại file; nội dung file không được lưu.
+            </p>
+          )}
           <div className="history__dialog-actions">
             {draft && onReuse && (
               <button

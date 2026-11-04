@@ -1,3 +1,5 @@
+import type { HistoryContext } from "../../../shared/services/browserHistoryFetch";
+import { browserHistoryFetch } from "../../../shared/services/browserHistoryFetch";
 import type {
   HillAnalyzeResponse,
   HillBlock,
@@ -124,10 +126,14 @@ function blocks(value: unknown, size: number): HillBlock[] {
   });
 }
 
-async function request(path: string, init?: RequestInit): Promise<unknown> {
+async function request(
+  path: string,
+  init?: RequestInit,
+  context?: HistoryContext,
+): Promise<unknown> {
   let response: Response;
   try {
-    response = await fetch(`/api/hill/${path}`, init);
+    response = await browserHistoryFetch(`/api/hill/${path}`, init, context);
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") throw error;
     throw genericError();
@@ -184,8 +190,8 @@ export const hillApi: HillGateway = {
     if (!data || data.success !== true) throw genericError();
     return { success: true, result: checkedKey(data.result, m), warnings: warnings(data.warnings) };
   },
-  async process(mode, payload): Promise<HillProcessResponse> {
-    const data = object(await request(mode, post(payload)));
+  async process(mode, payload, context): Promise<HillProcessResponse> {
+    const data = object(await request(mode, post(payload), context));
     if (!data || data.success !== true || typeof data.result !== "string") throw genericError();
     const key = checkedKey(data.key, expectedSize(payload));
     const parsedBlocks = blocks(data.blocks, key.m);

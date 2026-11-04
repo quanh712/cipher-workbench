@@ -192,4 +192,5 @@ vi.stubGlobal("fetch", fetchMock);
 
 beforeEach(() => {
   fetchMock.mockClear();
+  window.localStorage.removeItem("cipher-workbench.history.v1");
 });

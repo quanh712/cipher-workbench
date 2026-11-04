@@ -401,6 +401,7 @@ describe("Hill workspace", () => {
     expect(gateway.process).toHaveBeenCalledWith(
       "encrypt",
       expect.objectContaining({ text: content }),
+      { source: "file", inputLength: new TextEncoder().encode(content).byteLength },
     );
     const filePanel = screen.getByRole("region", { name: "Tệp văn bản" });
     const writeText = vi.spyOn(navigator.clipboard, "writeText");

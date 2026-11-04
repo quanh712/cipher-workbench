@@ -1,9 +1,12 @@
+import {
+  deleteBrowserHistory,
+  getHistoryStorageWarning,
+  historyExpired,
+} from "../services/browserHistory";
 import { useEffect, useRef, useState } from "react";
 import { getCipherAlgorithms } from "../../../shared/config/cipherAlgorithms";
 import type { CipherAlgorithm } from "../../../shared/types/cipher";
 import {
-  canShowServerHistory,
-  getHealthStatus,
   getHistory,
   getDhHistory,
   type HistoryItem,
@@ -67,6 +70,11 @@ export function HistoryWorkspace({
     sign: emptyStream,
     verify: emptyStream,
   });
+  const [clock, setClock] = useState(Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [retry, setRetry] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const controllers = useRef<AbortController[]>([]);
@@ -101,15 +109,6 @@ export function HistoryWorkspace({
       [key]: { ...current[key], loading: true, error: null },
     }));
     try {
-      if (key === "common" && !cursor) {
-        const health = await getHealthStatus(signal);
-        if (!canShowServerHistory(health))
-          throw new Error(
-            health.database === "unavailable"
-              ? "Cơ sở dữ liệu tạm thời không khả dụng. Hãy thử lại sau."
-              : "Lịch sử chưa được bật trên máy chủ.",
-          );
-      }
       const page =
         key === "common" || key === "dh"
           ? await (key === "dh" ? getDhHistory : getHistory)(
@@ -192,7 +191,7 @@ export function HistoryWorkspace({
         (item) => key !== "common" || !dhEnabled || item.cipher !== "diffie-hellman",
       ),
     )
-    .filter((item) => Date.parse(item.createdAt) >= boundary)
+    .filter((item) => !historyExpired(item, clock) && Date.parse(item.createdAt) >= boundary)
     .sort(
       (a, b) =>
         Date.parse(b.createdAt) - Date.parse(a.createdAt) ||
@@ -213,8 +212,9 @@ export function HistoryWorkspace({
         <div>
           <h2 id="history-title">Lịch sử thao tác</h2>
           <p>
-            Lịch sử thuộc hồ sơ trình duyệt này, lưu tối đa 5 giờ và có thể bị xóa sớm khi vượt hạn
-            mức. Diffie–Hellman chỉ lưu thông tin thao tác, không lưu tham số, khóa hay trace.
+            Lịch sử thuộc hồ sơ trình duyệt này, lưu tối đa 1 giờ và có thể bị xóa sớm khi vượt hạn
+            mức. Không lưu khóa bí mật hoặc nội dung file. Chọn lại file để thực hiện lại thao tác.
+            Diffie–Hellman chỉ lưu thông tin thao tác.
           </p>
         </div>
         <button
@@ -226,6 +226,17 @@ export function HistoryWorkspace({
         </button>
       </div>
 
+      {getHistoryStorageWarning() && <p role="status">{getHistoryStorageWarning()}</p>}
+      <button
+        type="button"
+        className="button button--secondary"
+        onClick={() => {
+          deleteBrowserHistory();
+          setRetry((n) => n + 1);
+        }}
+      >
+        Xóa toàn bộ lịch sử
+      </button>
       <div className="history__filters">
         <label>
           Thuật toán

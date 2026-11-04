@@ -1,3 +1,8 @@
+import {
+  readBrowserHistory,
+  getHistoryStorageWarning,
+} from "../../history/services/browserHistory";
+import { browserHistoryFetch } from "../../../shared/services/browserHistoryFetch";
 import { RsaGatewayError, type RsaGateway } from "./rsaGateway";
 import type { ModPowRow } from "../types/cipher";
 
@@ -32,7 +37,7 @@ function decimals(value: unknown): string[] {
 
 async function post(path: string, payload: JsonObject, signal: AbortSignal): Promise<JsonObject> {
   signal.throwIfAborted();
-  const response = await fetch(`/api/rsa/${path}`, {
+  const response = await browserHistoryFetch(`/api/rsa/${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -108,13 +113,14 @@ export const rsaApi: RsaGateway = {
       requireValue(typeof result.valid === "boolean");
       requireValue(BigInt(signature) === BigInt(parameters.signature));
     }
-    const history = object(body.history);
-    requireValue(
-      typeof history.saved === "boolean" &&
-        ["saved", "disabled", "unavailable", "capacity"].includes(history.reason as string),
+    const local = readBrowserHistory().find(
+      (row) => row.cipher === "rsa" && row.operation === operation,
     );
-    if (history.saved) requireValue(integer(history.id) > 0 && history.reason === "saved");
-    else requireValue(history.id === null && history.reason !== "saved");
+    const history = {
+      saved: !!local && !getHistoryStorageWarning(),
+      id: local?.id ?? null,
+      reason: getHistoryStorageWarning() ? "unavailable" : "saved",
+    };
     const kind = operation === "sign" ? "signed" : result.valid ? "valid" : "invalid";
     return {
       kind,

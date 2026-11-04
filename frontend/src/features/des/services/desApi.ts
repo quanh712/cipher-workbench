@@ -1,3 +1,4 @@
+import { browserHistoryFetch } from "../../../shared/services/browserHistoryFetch";
 import { CipherApiError, readFileDownload } from "../../../shared/services/cipherApi";
 import type { DesRequest, DesWarning } from "../types/cipher";
 import { DesGatewayError, type DesGateway } from "./desGateway";
@@ -79,7 +80,7 @@ export const desApi: DesGateway = {
   async process(request, signal) {
     if (request.inputMode === "file") {
       return readDes(
-        await fetch("/api/des/file", {
+        await browserHistoryFetch("/api/des/file", {
           method: "POST",
           body: fileForm(request, "content"),
           signal,
@@ -99,7 +100,7 @@ export const desApi: DesGateway = {
         : { outputFormat: request.format ?? "text" }),
     };
     return readDes(
-      await fetch(`/api/des/${request.operation}`, {
+      await browserHistoryFetch(`/api/des/${request.operation}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -108,7 +109,7 @@ export const desApi: DesGateway = {
     );
   },
   async download(request, signal) {
-    const response = await fetch("/api/des/file", {
+    const response = await browserHistoryFetch("/api/des/file", {
       method: "POST",
       body: fileForm(request, "file"),
       signal,

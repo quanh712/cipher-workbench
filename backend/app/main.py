@@ -3,6 +3,7 @@
 import asyncio
 import contextlib
 import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -10,8 +11,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import config
+from app.api.frontend import register_frontend
 from app.api.history_profile import HistoryProfileMiddleware
 from app.api.history_recorder import OperationHistoryRecorder
+from app.api.public_guard import PublicResourceGuard
 from app.api.request_size_guard import MultipartCompletionGuard, RequestSizeGuard
 from app.api.routes_additional_file import playfair_file_router, vigenere_file_router
 from app.api.routes_additional_text import playfair_router, vigenere_router
@@ -33,11 +36,17 @@ from app.db.engine import create_database
 from app.errors.handlers import register_exception_handlers
 from app.history.retention import purge_periodically
 
+PUBLIC_MODE = os.environ.get("PUBLIC_MODE", "").lower() in {"true", "1"}
+
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    if PUBLIC_MODE:
+        app.state.db = None
+        yield
+        return
     config.history_cookie_secure()  # Fail fast on a bad cookie-security setting.
     url = config.database_url()
     config.history_profile_signing_key(database_enabled=url is not None)
@@ -64,11 +73,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(lifespan=lifespan)
+app.state.public_mode = PUBLIC_MODE
 app.add_middleware(RequestSizeGuard, max_bytes=config.MAX_REQUEST_BYTES)
 app.add_middleware(MultipartCompletionGuard)
 # Outside the guards, so requests rejected by them are recorded too.
-app.add_middleware(OperationHistoryRecorder)
-app.add_middleware(HistoryProfileMiddleware)
+if not PUBLIC_MODE:
+    app.add_middleware(OperationHistoryRecorder)
+    app.add_middleware(HistoryProfileMiddleware)
+else:
+    app.add_middleware(PublicResourceGuard)
 cors_origins = config.cors_allow_origins()
 if cors_origins:
     # Outermost, so guard rejections such as 413 still carry CORS headers.
@@ -82,7 +95,8 @@ if cors_origins:
     )
 register_exception_handlers(app)
 app.include_router(health_router)
-app.include_router(history_router)
+if not PUBLIC_MODE:
+    app.include_router(history_router)
 app.include_router(rsa_router)
 app.include_router(rsa_signatures_router)
 app.include_router(dh_router)
@@ -99,3 +113,13 @@ app.include_router(columnar_text_router)
 app.include_router(columnar_file_router)
 app.include_router(vigenere_file_router)
 app.include_router(playfair_file_router)
+
+
+@app.get("/api/release", include_in_schema=False)
+async def release() -> dict[str, str]:
+    return {"revision": os.environ.get("GIT_SHA", "development")}
+
+
+static_dir = os.environ.get("STATIC_DIR", "").strip()
+if static_dir:
+    register_frontend(app, static_dir)

@@ -1,0 +1,88 @@
+"""Bounded single-process resource protection for the small public deployment.
+
+The rate budget is deliberately global: proxy-provided IP headers are untrusted,
+and a Render ingress peer must not be mistaken for an individual browser.
+"""
+
+import time
+
+from starlette.responses import JSONResponse
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
+
+
+class PublicResourceGuard:
+    """Cap API request size (including chunked bodies), rate, and concurrent work."""
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        max_bytes: int = 8 * 1024 * 1024,
+        requests_per_minute: int = 300,
+        max_concurrent: int = 4,
+    ) -> None:
+        self.app = app
+        self.max_bytes = max_bytes
+        self.requests_per_minute = requests_per_minute
+        self.max_concurrent = max_concurrent
+        self.window_start = time.monotonic()
+        self.requests = 0
+        self.active = 0
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        path = scope.get("path", "")
+        if scope["type"] != "http" or not path.startswith("/api/") or path == "/api/health":
+            await self.app(scope, receive, send)
+            return
+        now = time.monotonic()
+        if now - self.window_start >= 60:
+            self.window_start = now
+            self.requests = 0
+        if self.requests >= self.requests_per_minute:
+            await self._reject(
+                scope, receive, send, 429, "Quá nhiều yêu cầu. Vui lòng thử lại sau ít phút."
+            )
+            return
+        self.requests += 1
+        if self.active >= self.max_concurrent:
+            await self._reject(scope, receive, send, 503, "Máy chủ đang bận. Vui lòng thử lại sau.")
+            return
+        self.active += 1
+        try:
+            # Bound buffering even if Content-Length is missing, incorrect, or chunked.
+            body = bytearray()
+            while True:
+                message = await receive()
+                if message["type"] == "http.disconnect":
+                    return
+                chunk = message.get("body", b"")
+                if len(body) + len(chunk) > self.max_bytes:
+                    await self._reject(
+                        scope, receive, send, 413, "Yêu cầu vượt quá dung lượng cho phép."
+                    )
+                    return
+                body.extend(chunk)
+                if not message.get("more_body", False):
+                    break
+            pending = True
+
+            async def replay() -> Message:
+                nonlocal pending
+                if pending:
+                    pending = False
+                    return {"type": "http.request", "body": bytes(body), "more_body": False}
+                return await receive()
+
+            await self.app(scope, replay, send)
+        finally:
+            self.active -= 1
+
+    @staticmethod
+    async def _reject(
+        scope: Scope, receive: Receive, send: Send, status: int, message: str
+    ) -> None:
+        response = JSONResponse(
+            {"success": False, "message": message},
+            status_code=status,
+            headers={"Retry-After": "60"} if status in {429, 503} else None,
+        )
+        await response(scope, receive, send)

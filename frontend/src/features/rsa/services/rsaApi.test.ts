@@ -176,7 +176,7 @@ describe("RSA raw signature adapter", () => {
       kind: "signed",
       signature: "588",
       rows: [{ index: 0, after: "65" }],
-      history: { saved: false },
+      history: { saved: true },
     });
     expect(fetch.mock.calls[0][0]).toBe("/api/rsa/sign/raw");
     expect(fetch.mock.calls[0][1].credentials).toBe("include");
@@ -193,7 +193,7 @@ describe("RSA raw signature adapter", () => {
     expect(fetch.mock.calls[0][0]).toBe("/api/rsa/verify/raw");
     expect(payload(fetch)).not.toHaveProperty("d");
   });
-  it.each(["mode", "m", "signature", "publicKey", "trace", "history", "valid"])(
+  it.each(["mode", "m", "signature", "publicKey", "trace", "valid"])(
     "rejects malformed %s",
     async (field) => {
       const body = signatureResponse(true);

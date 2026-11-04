@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-backend_context="${BACKEND_CONTEXT:-../cipher-workbench-be}"
+frontend_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+backend_context="${BACKEND_CONTEXT:-${frontend_root}/../backend}"
 image_name="cipher-workbench-backend:integration"
 container_name="cipher-workbench-backend-integration"
 backend_port="${BACKEND_INTEGRATION_PORT:-18000}"

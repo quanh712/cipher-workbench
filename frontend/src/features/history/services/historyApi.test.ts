@@ -1,121 +1,174 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, expect, it, vi } from "vitest";
+import { getHistory, getDhHistory } from "./historyApi";
 import {
-  canShowServerHistory,
-  getHealthStatus,
-  getHistory,
-  getDhHistory,
-  HistoryApiError,
-} from "./historyApi";
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
+  appendBrowserHistory,
+  readBrowserHistory,
+  deleteBrowserHistory,
+  HISTORY_TTL,
+  HISTORY_KEY,
+} from "./browserHistory";
+import { getSignatureDetail, verificationDraft, deleteSignature } from "./signatureHistoryApi";
+import { browserHistoryFetch } from "../../../shared/services/browserHistoryFetch";
+const row = (id = 1) => ({
+  id,
+  createdAt: new Date().toISOString(),
+  cipher: "caesar" as const,
+  operation: "encrypt" as const,
+  source: "text" as const,
+  responseMode: null,
+  inputLength: 5,
+  outputLength: 5,
+  httpStatus: 200,
+  succeeded: true,
+  durationMs: 1,
+});
+beforeEach(() => localStorage.removeItem(HISTORY_KEY));
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
+it("filters and paginates browser history without contacting the server", async () => {
+  const network = vi.spyOn(globalThis, "fetch");
+  for (let i = 1; i <= 23; i++) appendBrowserHistory(row(i));
+  const page = await getHistory({ cipher: "caesar", operation: "encrypt" });
+  expect(page.items).toHaveLength(20);
+  expect((await getHistory({ cursor: page.nextCursor! })).items).toHaveLength(3);
+  expect((await getDhHistory({})).items).toHaveLength(0);
+  expect(network).not.toHaveBeenCalled();
+});
+it("expires at exactly one hour and physically prunes expired rows on read", () => {
+  vi.useFakeTimers();
+  appendBrowserHistory(row());
+  vi.advanceTimersByTime(HISTORY_TTL - 1);
+  expect(readBrowserHistory()).toHaveLength(1);
+  vi.advanceTimersByTime(1);
+  expect(readBrowserHistory()).toEqual([]);
+  expect(localStorage.getItem(HISTORY_KEY)).toBe("[]");
+});
+it("bounds retained records, deletes entries and clears all", () => {
+  for (let i = 0; i < 110; i++) appendBrowserHistory(row(i));
+  expect(readBrowserHistory()).toHaveLength(100);
+  deleteBrowserHistory(109);
+  expect(readBrowserHistory()).toHaveLength(99);
+  deleteBrowserHistory();
+  expect(readBrowserHistory()).toEqual([]);
+});
+it("does not fail the operation when storage is unavailable", async () => {
+  vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw new Error("quota");
   });
-}
-
-afterEach(() => vi.restoreAllMocks());
-
-describe("history API", () => {
-  it("accepts the database status and history gate even when health returns 503", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      json(
-        { success: true, result: { app: "ok", database: "unavailable", history: "enabled" } },
-        503,
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(JSON.stringify({ success: true, result: "BCD" }), {
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
+  await expect(
+    browserHistoryFetch("/api/caesar/encrypt", {
+      body: JSON.stringify({ text: "ABC", key: "secret-key" }),
+    }),
+  ).resolves.toBeInstanceOf(Response);
+});
+it("stores only public raw RSA data for reuse, excludes private key and traces", async () => {
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        success: true,
+        result: {
+          mode: "raw-integer",
+          signature: "588",
+          publicKey: { e: "17", n: "3233" },
+          trace: { exponent: "private-exponent" },
+        },
+      }),
+      { headers: { "Content-Type": "application/json" } },
+    ),
+  );
+  await browserHistoryFetch("/api/rsa/sign/raw", {
+    body: JSON.stringify({ m: "65", e: "17", n: "3233", d: "private-exponent" }),
+  });
+  const rows = readBrowserHistory();
+  expect(localStorage.getItem(HISTORY_KEY)).not.toContain("private-exponent");
+  expect(verificationDraft(await getSignatureDetail(rows[0].id))).toEqual({
+    m: "65",
+    signature: "588",
+    e: "17",
+    n: "3233",
+  });
+  await deleteSignature(rows[0].id);
+  expect(readBrowserHistory()).toEqual([]);
+});
+it("never persists uploaded bytes, original text, cipher keys, or DH secrets", async () => {
+  vi.spyOn(globalThis, "fetch").mockImplementation(
+    async () =>
+      new Response(
+        JSON.stringify({
+          success: true,
+          result: "private-upload-result",
+          privateKeyA: "private-dh-secret",
+        }),
+        { headers: { "Content-Type": "application/json" } },
       ),
-    );
-    await expect(getHealthStatus()).resolves.toEqual({
-      database: "unavailable",
-      history: "enabled",
-    });
+  );
+  const form = new FormData();
+  form.append("file", new File(["private-upload-bytes"], "private-name.txt"));
+  form.append("action", "encrypt");
+  form.append("key", "private-cipher-key");
+  await browserHistoryFetch("/api/des/file", { body: form });
+  await browserHistoryFetch("/api/dh/exchange", {
+    body: JSON.stringify({ privateKeyA: "private-dh-secret" }),
   });
-
-  it("requires both a healthy database and enabled history to read server history", () => {
-    expect(canShowServerHistory({ database: "ok", history: "enabled" })).toBe(true);
-    expect(canShowServerHistory({ database: "ok", history: "disabled" })).toBe(false);
-    expect(canShowServerHistory({ database: "disabled", history: "enabled" })).toBe(false);
-    expect(canShowServerHistory({ database: "unavailable", history: "enabled" })).toBe(false);
+  await browserHistoryFetch("/api/caesar/encrypt", {
+    body: JSON.stringify({ text: "private-original-text", key: 3 }),
   });
-
-  it("does not treat an older health response without the history gate as enabled", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      json({ success: true, result: { app: "ok", database: "ok" } }),
-    );
-    await expect(getHealthStatus()).rejects.toEqual(
-      new HistoryApiError("Không thể tải lịch sử. Vui lòng thử lại.", 200),
-    );
-  });
-
-  it("passes the server cursor unchanged with filters", async () => {
-    const fetch = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(json({ success: true, result: { items: [], nextCursor: null } }));
-    await getHistory({ cipher: "playfair", operation: "decrypt", cursor: "a+/=" });
-    const url = new URL(String(fetch.mock.calls[0][0]), "http://localhost");
-    expect(url.pathname).toBe("/api/history");
-    expect(url.searchParams.get("cursor")).toBe("a+/=");
-    expect(url.searchParams.get("cipher")).toBe("playfair");
-    expect(url.searchParams.get("operation")).toBe("decrypt");
-  });
-
-  it("keeps the backend error message", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      json({ success: false, message: "Lịch sử tạm thời không khả dụng." }, 503),
-    );
-    await expect(getHistory({})).rejects.toEqual(
-      new HistoryApiError("Lịch sử tạm thời không khả dụng.", 503),
-    );
-  });
-
-  it.each([
-    "validate_params",
-    "generate_params",
-    "generate_keypair",
-    "derive_shared_secret",
-    "exchange",
-    "encrypt",
-    "decrypt",
-  ] as const)("maps DH filters and rows for %s without changing metadata", async (operation) => {
-    const row = {
-      id: 7,
-      cipher: "dh",
-      operation,
-      createdAt: "2026-10-13T00:00:00Z",
-      source: "text",
-      responseMode: null,
-      inputLength: null,
-      outputLength: null,
-      succeeded: false,
-      httpStatus: 422,
-      durationMs: 3,
-    };
-    const fetch = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(json({ success: true, result: { items: [row], nextCursor: "next+/=" } }));
-    const controller = new AbortController();
-    await expect(
-      getHistory({ cipher: "diffie-hellman", operation, cursor: "old+/=" }, controller.signal),
-    ).resolves.toEqual({ items: [{ ...row, cipher: "diffie-hellman" }], nextCursor: "next+/=" });
-    const [path, options] = fetch.mock.calls[0];
-    const url = new URL(String(path), "http://localhost");
-    expect(url.searchParams.get("cipher")).toBe("dh");
-    expect(url.searchParams.get("operation")).toBe(operation);
-    expect(url.searchParams.get("cursor")).toBe("old+/=");
-    expect(options).toMatchObject({
-      signal: controller.signal,
-      credentials: "same-origin",
-      cache: "no-store",
-    });
-  });
+  const stored = localStorage.getItem(HISTORY_KEY)!;
+  for (const secret of [
+    "private-upload-bytes",
+    "private-upload-result",
+    "private-name.txt",
+    "private-cipher-key",
+    "private-dh-secret",
+    "private-original-text",
+  ])
+    expect(stored).not.toContain(secret);
+  expect(readBrowserHistory()).toHaveLength(3);
+});
+it("recovers from malformed local storage", () => {
+  localStorage.setItem(HISTORY_KEY, "broken");
+  expect(readBrowserHistory()).toEqual([]);
 });
 
-it("reads DH metadata from its own backend alias", async () => {
-  const fetch = vi
-    .spyOn(globalThis, "fetch")
-    .mockResolvedValue(json({ success: true, result: { items: [], nextCursor: null } }));
-  await getDhHistory({ operation: "exchange" });
-  const url = new URL(String(fetch.mock.calls[0][0]), "http://localhost");
-  expect(url.pathname).toBe("/api/dh/history");
-  expect(url.searchParams.get("cipher")).toBe("dh");
-  expect(url.searchParams.get("operation")).toBe("exchange");
+it.each([
+  ["params", "validate_params"],
+  ["params/random", "generate_params"],
+  ["keypair", "generate_keypair"],
+  ["shared-secret", "derive_shared_secret"],
+  ["caesar", "encrypt"],
+])("maps DH route %s to metadata operation %s", async (path, operation) => {
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response("{}", { headers: { "Content-Type": "application/json" } }),
+  );
+  await browserHistoryFetch(`/api/dh/${path}`, {
+    body: JSON.stringify({ action: "encrypt", privateKey: "never-store-this" }),
+  });
+  expect((await getDhHistory({})).items[0].operation).toBe(operation);
+  expect(localStorage.getItem(HISTORY_KEY)).not.toContain("never-store-this");
+});
+it("bounds an oversized prior record and retains safe new operations", () => {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify([{ ...row(), oversized: "x".repeat(300_000) }]));
+  expect(readBrowserHistory()).toHaveLength(0);
+  appendBrowserHistory(row(2));
+  expect(readBrowserHistory()).toHaveLength(1);
+  expect(new TextEncoder().encode(localStorage.getItem(HISTORY_KEY)!).byteLength).toBeLessThan(
+    256_001,
+  );
+});
+it("labels JSON file processing without retaining original file contents", async () => {
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}"));
+  await browserHistoryFetch(
+    "/api/hill/encrypt",
+    { body: JSON.stringify({ text: "private-file-content", key: [3, 4] }) },
+    { source: "file", inputLength: 20 },
+  );
+  expect(readBrowserHistory()[0]).toMatchObject({ source: "file", inputLength: 20 });
+  expect(localStorage.getItem(HISTORY_KEY)).not.toContain("private-file-content");
 });

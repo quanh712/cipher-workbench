@@ -51,16 +51,11 @@ describe("Cipher Workbench", () => {
       vi.unstubAllEnvs();
     }
   });
-  it("hides server history unless both health flags allow it", async () => {
-    const health = vi.mocked(getHealthStatus);
-    const { unmount } = render(<App />);
-    await waitFor(() => expect(health).toHaveBeenCalled());
-    expect(screen.queryByRole("button", { name: "Lịch sử thao tác" })).not.toBeInTheDocument();
-    unmount();
-
-    health.mockResolvedValue({ database: "ok", history: "enabled" });
+  it("keeps browser history available when server history is disabled", async () => {
+    vi.mocked(getHealthStatus).mockResolvedValue({ database: "disabled", history: "disabled" });
     render(<App />);
     expect(await screen.findByRole("button", { name: "Lịch sử thao tác" })).toBeVisible();
+    expect(getHealthStatus).not.toHaveBeenCalled();
   });
 
   it.each([

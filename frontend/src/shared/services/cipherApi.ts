@@ -1,3 +1,4 @@
+import { browserHistoryFetch } from "./browserHistoryFetch";
 import { readPadding, type PaddingInfo } from "../utils/padding";
 import type { CipherAlgorithm } from "../types/cipher";
 
@@ -96,7 +97,7 @@ export async function transformText(
   operation: "encrypt" | "decrypt",
   body: string,
 ): Promise<SuccessResponse> {
-  const response = await fetch(`/api/${cipher}/${operation}`, {
+  const response = await browserHistoryFetch(`/api/${cipher}/${operation}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body,
@@ -105,7 +106,7 @@ export async function transformText(
 }
 
 export async function previewFile(request: FileCipherRequest): Promise<SuccessResponse> {
-  const response = await fetch(`/api/${request.cipher}/file`, {
+  const response = await browserHistoryFetch(`/api/${request.cipher}/file`, {
     method: "POST",
     body: createFileForm(request, "content"),
   });
@@ -127,7 +128,7 @@ export async function readFileDownload(response: Response): Promise<DownloadResp
 }
 
 export async function downloadFile(request: FileCipherRequest): Promise<DownloadResponse> {
-  const response = await fetch(`/api/${request.cipher}/file`, {
+  const response = await browserHistoryFetch(`/api/${request.cipher}/file`, {
     method: "POST",
     body: createFileForm(request, "file"),
   });

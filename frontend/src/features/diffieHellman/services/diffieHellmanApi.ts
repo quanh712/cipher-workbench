@@ -1,3 +1,5 @@
+import { getDhTimeoutMs } from "../config";
+import { browserHistoryFetch } from "../../../shared/services/browserHistoryFetch";
 import { DiffieHellmanGatewayError, type DiffieHellmanGateway } from "./diffieHellmanGateway";
 import { isDhExchangeResult } from "./validateDhResult";
 import type {
@@ -210,14 +212,14 @@ export async function postDh<T>(
     const error = new DiffieHellmanGatewayError(TIMEOUT, "TIMEOUT");
     controller.abort(error);
     rejectAbort(error);
-  }, 15_000);
+  }, getDhTimeoutMs());
   try {
     return await Promise.race([
       cancelled,
       (async () => {
         let response: Response;
         try {
-          response = await fetch(`/api/dh/${path}`, {
+          response = await browserHistoryFetch(`/api/dh/${path}`, {
             method: "POST",
             headers:
               payload instanceof FormData

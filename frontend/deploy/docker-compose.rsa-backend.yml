@@ -1,4 +1,5 @@
-# Overlay on ../cipher-workbench-be/docker-compose.yml; keep its existing history volume.
+# Legacy stateful recovery overlay on ../backend/docker-compose.yml.
+# Keeps the existing history volume and pinned legacy image; not used for public releases.
 services:
   migrate:
     image: cipher-workbench-be-app:dh-history-9d22937

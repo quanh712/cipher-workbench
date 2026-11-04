@@ -1,3 +1,4 @@
+import { browserHistoryFetch } from "../../../shared/services/browserHistoryFetch";
 import {
   CipherApiError,
   readFileDownload,
@@ -36,7 +37,7 @@ export const affineApi: AffineGateway = {
   },
 
   async previewFile(request: AffineFileRequest) {
-    const response = await fetch("/api/affine/file", {
+    const response = await browserHistoryFetch("/api/affine/file", {
       method: "POST",
       body: fileForm(request, "content"),
     });
@@ -44,7 +45,7 @@ export const affineApi: AffineGateway = {
   },
 
   async downloadFile(request: AffineFileRequest) {
-    const response = await fetch("/api/affine/file", {
+    const response = await browserHistoryFetch("/api/affine/file", {
       method: "POST",
       body: fileForm(request, "file"),
     });

@@ -1,3 +1,4 @@
+import type { HistoryContext } from "../../../shared/services/browserHistoryFetch";
 import type { CipherMode } from "../../../shared/types/cipher";
 import type {
   HillAnalyzeResponse,
@@ -11,5 +12,9 @@ import type {
 export interface HillGateway {
   analyze(payload: HillKeyPayload, signal?: AbortSignal): Promise<HillAnalyzeResponse>;
   random(m: HillSize, signal?: AbortSignal): Promise<HillRandomResponse>;
-  process(mode: CipherMode, payload: HillProcessRequest): Promise<HillProcessResponse>;
+  process(
+    mode: CipherMode,
+    payload: HillProcessRequest,
+    context?: HistoryContext,
+  ): Promise<HillProcessResponse>;
 }

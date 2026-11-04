@@ -1,3 +1,4 @@
+import { ServerWaitStatus } from "../shared/components/ServerWaitStatus";
 import { DiffieHellmanWorkspace } from "../features/diffieHellman/components/DiffieHellmanWorkspace";
 import { useDiffieHellman } from "../features/diffieHellman/hooks/useDiffieHellman";
 import type { DiffieHellmanGateway } from "../features/diffieHellman/services/diffieHellmanGateway";
@@ -8,7 +9,7 @@ import { rsaApi } from "../features/rsa/services/rsaApi";
 import { RsaWorkspace } from "../features/rsa/components/RsaWorkspace";
 import { useRsaCipher } from "../features/rsa/hooks/useRsaCipher";
 import { createDesDemoGateway } from "../features/des/demo/createDesDemoGateway";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { AffineWorkspace } from "../features/affine/components/AffineWorkspace";
 import { useAffineCipher } from "../features/affine/hooks/useAffineCipher";
 import { affineApi } from "../features/affine/services/affineApi";
@@ -26,7 +27,6 @@ import { VigenereWorkspace } from "../features/vigenere/components/VigenereWorks
 import { useVigenereCipher } from "../features/vigenere/hooks/useVigenereCipher";
 import type { VerificationDraft } from "../features/history/services/signatureHistoryApi";
 import { HistoryWorkspace } from "../features/history/components/HistoryWorkspace";
-import { canShowServerHistory, getHealthStatus } from "../features/history/services/historyApi";
 import { CipherAlgorithmSelector } from "../shared/components/CipherAlgorithmSelector";
 import { AppHeader } from "../shared/components/AppHeader";
 import { CipherMark } from "../shared/components/CipherMark";
@@ -61,9 +61,7 @@ export function App({
   );
   const hillOpened = useRef(false);
   const cipherAlgorithms = getCipherAlgorithms();
-  const [historyAvailable, setHistoryAvailable] = useState(
-    import.meta.env.VITE_ENABLE_RSA === "true",
-  );
+  const historyAvailable = true;
   const isLoading =
     cipher.isLoading ||
     vigenere.isLoading ||
@@ -72,21 +70,6 @@ export function App({
     columnar.isBusy ||
     hill.isBusy ||
     des.isBusy;
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void getHealthStatus(controller.signal)
-      .then((health) => {
-        if (!controller.signal.aborted)
-          setHistoryAvailable(
-            canShowServerHistory(health) || import.meta.env.VITE_ENABLE_RSA === "true",
-          );
-      })
-      .catch(() => {
-        // History is optional; a failed health check must not block cipher workspaces.
-      });
-    return () => controller.abort();
-  }, []);
 
   function resetWorkspace() {
     setVerification(undefined);
@@ -163,6 +146,7 @@ export function App({
           </p>
         </header>
         <div className="workspace">
+          <ServerWaitStatus />
           {historyAvailable && (
             <div className="view-switch" role="group" aria-label="Khu vực làm việc">
               <button

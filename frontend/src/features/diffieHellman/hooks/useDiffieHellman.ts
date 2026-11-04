@@ -1,3 +1,4 @@
+import { getDhTimeoutMs } from "../config";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
   DiffieHellmanGatewayError,
@@ -218,7 +219,7 @@ export function useDiffieHellman(gateway: DiffieHellmanGateway | null, active: b
       if (!isCurrent()) return;
       timedOut = true;
       controller.abort(new DOMException("Request timed out", "TimeoutError"));
-    }, 15_000);
+    }, getDhTimeoutMs());
     setOperation({ ...idleState(), status: "loading", task });
 
     try {

@@ -305,11 +305,18 @@ export function useHillCipher(gateway: HillGateway, active: boolean) {
     setResultError(null);
     setNotice(null);
     try {
-      const response = await gateway.process(snapshot.mode, {
+      const payload = {
         text: snapshot.text,
         ...snapshot.payload,
-        options: { stripDiacritics: snapshot.stripDiacritics, padChar: "X" },
-      });
+        options: { stripDiacritics: snapshot.stripDiacritics, padChar: "X" as const },
+      };
+      const response =
+        inputType === "file" && file
+          ? await gateway.process(snapshot.mode, payload, {
+              source: "file",
+              inputLength: file.size,
+            })
+          : await gateway.process(snapshot.mode, payload);
       setResult({
         ...response,
         mode: snapshot.mode,

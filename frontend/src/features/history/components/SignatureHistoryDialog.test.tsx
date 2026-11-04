@@ -11,7 +11,7 @@ vi.mock("../services/signatureHistoryApi", async (original) => ({
 
 const detail: SignatureHistoryDetail = {
   id: 1,
-  createdAt: "2026-10-12T00:00:00Z",
+  createdAt: new Date().toISOString(),
   cipher: "rsa",
   operation: "verify",
   source: "text",

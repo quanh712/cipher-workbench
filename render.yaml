@@ -1,0 +1,43 @@
+# Bootstrap reference, not an automatic deployment instruction.
+# Replace BOTH zero digests with the private bootstrap digest shown in Actions.
+# First add a Render registry credential named cipher-workbench-ghcr.
+# Keep auto deploy disabled. Later releases use deploy/release.py by digest.
+services:
+  - type: web
+    name: cipher-workbench-staging
+    runtime: image
+    plan: free
+    region: singapore
+    autoDeployTrigger: 'off'
+    image:
+      url: ghcr.io/quanh712/cipher-workbench@sha256:0000000000000000000000000000000000000000000000000000000000000000
+      creds:
+        fromRegistryCreds:
+          name: cipher-workbench-ghcr
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        value: ''
+      - key: HISTORY_API_ENABLED
+        value: 'false'
+      - key: HISTORY_COOKIE_SECURE
+        value: 'true'
+  - type: web
+    name: cipher-workbench-production
+    runtime: image
+    plan: free
+    region: singapore
+    autoDeployTrigger: 'off'
+    image:
+      url: ghcr.io/quanh712/cipher-workbench@sha256:0000000000000000000000000000000000000000000000000000000000000000
+      creds:
+        fromRegistryCreds:
+          name: cipher-workbench-ghcr
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        value: ''
+      - key: HISTORY_API_ENABLED
+        value: 'false'
+      - key: HISTORY_COOKIE_SECURE
+        value: 'true'

@@ -298,7 +298,7 @@ export function RsaSignaturePanel({ signature }: { signature: SignatureControlle
                     ? "lưu lịch sử đang tắt"
                     : result.history.reason === "capacity"
                       ? "lịch sử đã đầy"
-                      : "dịch vụ lịch sử chưa khả dụng"}
+                      : "trình duyệt chưa lưu được lịch sử"}
                   .
                 </p>
               )}

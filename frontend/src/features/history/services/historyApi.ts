@@ -1,3 +1,4 @@
+import { browserHistoryPage, readBrowserHistory } from "./browserHistory";
 import type { CipherAlgorithm } from "../../../shared/types/cipher";
 import type { CipherMode } from "../../../shared/types/cipher";
 
@@ -108,51 +109,28 @@ export function canShowServerHistory(health: HealthStatus): boolean {
   return health.database === "ok" && health.history === "enabled";
 }
 
-export function getHistory(query: HistoryQuery, signal?: AbortSignal): Promise<HistoryPage> {
-  return readHistory("/api/history", query, signal);
+export async function getHistory(query: HistoryQuery, signal?: AbortSignal): Promise<HistoryPage> {
+  signal?.throwIfAborted();
+  const rows = readBrowserHistory().filter(
+    (row) =>
+      row.operation !== "sign" &&
+      row.operation !== "verify" &&
+      row.cipher !== "diffie-hellman" &&
+      (!query.cipher || row.cipher === query.cipher) &&
+      (!query.operation || row.operation === query.operation),
+  );
+  return browserHistoryPage(rows as HistoryItem[], query.cursor);
 }
-
-export function getDhHistory(query: HistoryQuery, signal?: AbortSignal): Promise<HistoryPage> {
-  return readHistory("/api/dh/history", { ...query, cipher: "diffie-hellman" }, signal);
-}
-
-async function readHistory(
-  path: string,
+export async function getDhHistory(
   query: HistoryQuery,
   signal?: AbortSignal,
 ): Promise<HistoryPage> {
-  const params = new URLSearchParams({ limit: "20" });
-  if (query.cipher) params.set("cipher", query.cipher === "diffie-hellman" ? "dh" : query.cipher);
-  if (query.operation) params.set("operation", query.operation);
-  if (query.cursor) params.set("cursor", query.cursor);
-  const response = await fetch(`${path}?${params}`, {
-    signal,
-    credentials: "same-origin",
-    cache: "no-store",
-  });
-  const body = await readBody(response);
-  if (!response.ok) return readError(body, response.status);
-  if (
-    typeof body !== "object" ||
-    body === null ||
-    !("success" in body) ||
-    body.success !== true ||
-    !("result" in body) ||
-    typeof body.result !== "object" ||
-    body.result === null ||
-    !("items" in body.result) ||
-    !Array.isArray(body.result.items) ||
-    !("nextCursor" in body.result) ||
-    (body.result.nextCursor !== null && typeof body.result.nextCursor !== "string")
-  ) {
-    throw new HistoryApiError(SYSTEM_ERROR, response.status);
-  }
-  const page = body.result as HistoryPage;
-  return {
-    ...page,
-    items: page.items.map((item) => ({
-      ...item,
-      cipher: String(item.cipher) === "dh" ? "diffie-hellman" : item.cipher,
-    })),
-  };
+  signal?.throwIfAborted();
+  return browserHistoryPage(
+    readBrowserHistory().filter(
+      (row) =>
+        row.cipher === "diffie-hellman" && (!query.operation || row.operation === query.operation),
+    ) as HistoryItem[],
+    query.cursor,
+  );
 }

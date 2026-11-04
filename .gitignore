@@ -1,0 +1,21 @@
+# Local credentials and configuration
+.env
+.env.*
+!.env.example
+render.env
+*.pem
+*.key
+# Build and test output
+**/node_modules/
+**/dist/
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.coverage
+**/htmlcov/
+**/coverage/
+**/test-results/
+**/playwright-report/
+*.log
+*.tsbuildinfo

@@ -28,6 +28,7 @@ const run = () => diffieHellmanApi.exchange(createDhPresetRequest(), signal());
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  vi.unstubAllEnvs();
 });
 
 describe("Diffie–Hellman target HTTP adapter", () => {
@@ -263,6 +264,8 @@ describe("Diffie–Hellman target HTTP adapter", () => {
       resolve(json(task === "exchange" ? exchange() : random()));
       await Promise.resolve();
       expect(fetch).toHaveBeenCalledTimes(1);
+      // jsdom schedules a storage event when browser history is saved.
+      await vi.advanceTimersByTimeAsync(0);
       expect(vi.getTimerCount()).toBe(0);
     },
   );
@@ -291,6 +294,8 @@ describe("Diffie–Hellman target HTTP adapter", () => {
     next.abort();
     await assertion;
     expect(fetch.mock.calls[0][1].signal.aborted).toBe(true);
+    // jsdom schedules a storage event when browser history is saved.
+    await vi.advanceTimersByTimeAsync(0);
     expect(vi.getTimerCount()).toBe(0);
   });
   it("clears deadline and removes caller listener after success", async () => {
@@ -300,6 +305,22 @@ describe("Diffie–Hellman target HTTP adapter", () => {
     const remove = vi.spyOn(controller.signal, "removeEventListener");
     await diffieHellmanApi.exchange(createDhPresetRequest(), controller.signal);
     expect(remove).toHaveBeenCalledWith("abort", expect.any(Function));
+    // jsdom schedules a storage event when browser history is saved.
+    await vi.advanceTimersByTimeAsync(0);
     expect(vi.getTimerCount()).toBe(0);
   });
+});
+
+it("allows a sleeping public server up to two minutes while preserving cancellation", async () => {
+  vi.stubEnv("VITE_PUBLIC_MODE", "true");
+  vi.useFakeTimers();
+  const fetch = vi.fn().mockReturnValue(new Promise(() => {}));
+  vi.stubGlobal("fetch", fetch);
+  const result = diffieHellmanApi.exchange(createDhPresetRequest(), signal());
+  const assertion = expect(result).rejects.toMatchObject({ code: "TIMEOUT" });
+  await vi.advanceTimersByTimeAsync(119999);
+  expect(fetch.mock.calls[0][1].signal.aborted).toBe(false);
+  await vi.advanceTimersByTimeAsync(1);
+  await assertion;
+  expect(fetch.mock.calls[0][1].signal.aborted).toBe(true);
 });
