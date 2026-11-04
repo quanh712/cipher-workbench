@@ -1,0 +1,40 @@
+services:
+  migrate:
+    build: .
+    command: ["alembic", "-c", "alembic_sqlite.ini", "upgrade", "head"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    volumes:
+      - history-data:/data
+    restart: "no"
+
+  app:
+    build: .
+    ports:
+      - "${APP_HOST_PORT:-8080}:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      HISTORY_API_ENABLED: ${HISTORY_API_ENABLED:-false}
+      HISTORY_COOKIE_SECURE: ${HISTORY_COOKIE_SECURE:-true}
+      HISTORY_PROFILE_SIGNING_KEY: ${HISTORY_PROFILE_SIGNING_KEY:?set HISTORY_PROFILE_SIGNING_KEY}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-}
+    volumes:
+      - history-data:/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  retention:
+    build: .
+    command: ["python", "-m", "app.history.retention", "--daemon"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    volumes:
+      - history-data:/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: always
+
+volumes:
+  history-data:

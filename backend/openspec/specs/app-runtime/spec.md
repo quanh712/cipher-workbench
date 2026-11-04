@@ -1,0 +1,152 @@
+# app-runtime Specification
+
+## Purpose
+
+Định nghĩa cách ứng dụng được phục vụ và vận hành: một tiến trình duy nhất phục vụ API và tài liệu API trên cùng một origin và cùng cổng, truy cập được qua `/docs`, không kèm giao diện web, chạy được cả ở máy local lẫn trong container với hành vi giống nhau, và không lưu lại bất kỳ dữ liệu nào của người dùng sau khi request kết thúc.
+
+## Requirements
+
+### Requirement: Một tiến trình duy nhất phục vụ API
+
+Ứng dụng SHALL phục vụ toàn bộ endpoint API, `/docs` và `/openapi.json` từ cùng một tiến trình, trên cùng một origin. Ứng dụng MUST NOT phục vụ giao diện web hay tài nguyên tĩnh của giao diện; UI thuộc project FE riêng. Cách tích hợp khuyến nghị là FE gọi đường dẫn tương đối `/api/...` qua proxy. Mặc định ứng dụng MUST NOT gửi header CORS. Khi biến môi trường `CORS_ALLOW_ORIGINS` chứa danh sách origin chính xác (scheme `http`/`https`, host, cổng tùy chọn, không path, không wildcard), ứng dụng SHALL chỉ cho phép đúng các origin đó, chỉ method `GET`/`POST`, chỉ request header `Content-Type`, expose `Content-Disposition` và MUST NOT cho phép credentials; giá trị không hợp lệ SHALL làm ứng dụng không khởi động. (Truy vết: quyết định chủ sở hữu 2026-09-28, 2026-09-29)
+
+#### Scenario: Không còn giao diện ở tuyến gốc
+
+- **WHEN** client gửi `GET /`
+- **THEN** ứng dụng trả HTTP 404
+
+#### Scenario: Không còn tài nguyên tĩnh
+
+- **WHEN** client gửi `GET /static/app.js`
+- **THEN** ứng dụng trả HTTP 404
+
+#### Scenario: API không trả header CORS
+
+- **WHEN** `CORS_ALLOW_ORIGINS` không được đặt
+- **AND** client gọi một endpoint API
+- **THEN** phản hồi không có header `access-control-allow-origin`
+
+#### Scenario: Origin được phép nhận header CORS
+
+- **WHEN** `CORS_ALLOW_ORIGINS=https://fe.example.com`
+- **AND** client gửi request với `Origin: https://fe.example.com`
+- **THEN** phản hồi có `access-control-allow-origin: https://fe.example.com` và `access-control-expose-headers: Content-Disposition`
+- **AND** không có `access-control-allow-credentials`
+
+#### Scenario: Origin khác không nhận header CORS
+
+- **WHEN** `CORS_ALLOW_ORIGINS=https://fe.example.com`
+- **AND** client gửi request với `Origin: https://evil.example.com`
+- **THEN** phản hồi không có header `access-control-allow-origin`
+
+#### Scenario: Cấu hình wildcard bị từ chối
+
+- **WHEN** `CORS_ALLOW_ORIGINS=*`
+- **THEN** ứng dụng không khởi động
+
+### Requirement: Tuyến tài liệu API tương tác
+
+Ứng dụng SHALL đáp ứng request tới `/docs` bằng trang tài liệu API tương tác, liệt kê các endpoint mà ứng dụng cung cấp cùng hợp đồng request và response của chúng. Trang này MUST cho phép người dùng xem và thử gọi các endpoint ngay trên trình duyệt. (Truy vết: docx §7)
+
+#### Scenario: Mở tài liệu API
+
+- **WHEN** người dùng truy cập `/docs` trên ứng dụng đang chạy
+- **THEN** ứng dụng trả về trang tài liệu API tương tác
+- **AND** trang liệt kê các endpoint Caesar Cipher mà ứng dụng cung cấp
+
+### Requirement: Ứng dụng lắng nghe cổng 8000
+
+Ứng dụng SHALL lắng nghe trên cổng `8000` khi chạy ở máy local và khi chạy trong container. Tài liệu API và toàn bộ endpoint API MUST cùng được phục vụ trên cổng này; ứng dụng MUST KHÔNG dùng thêm cổng thứ hai. (Truy vết: docx §7)
+
+#### Scenario: Truy cập ứng dụng chạy local qua cổng 8000
+
+- **WHEN** ứng dụng được khởi chạy ở máy local
+- **THEN** tài liệu API truy cập được tại `/docs` trên cổng `8000`
+- **AND** các endpoint `/api/*` truy cập được trên cùng cổng `8000`
+
+#### Scenario: Không có thành phần nào dùng cổng khác
+
+- **WHEN** ứng dụng đang chạy và phục vụ tài liệu API và các endpoint API
+- **THEN** tất cả đều truy cập được qua cổng `8000`
+
+### Requirement: Chạy được bằng Docker với hành vi giống hệt local
+
+Ứng dụng SHALL đóng gói và chạy được bằng Docker: từ mã nguồn trong repo có thể tạo được image và khởi chạy container mà không cần thao tác chuẩn bị thủ công nào ngoài các bước đã tài liệu hóa. Container đang chạy MUST phục vụ được `/docs` trên cổng `8000`, và hành vi quan sát được của ứng dụng — kết quả mã hóa/giải mã, HTTP status, cấu trúc phản hồi và thông báo lỗi — MUST giống hệt khi chạy local với cùng đầu vào. (Truy vết: docx §7)
+
+#### Scenario: Truy cập ứng dụng chạy trong container
+
+- **WHEN** image được tạo từ mã nguồn trong repo và container được khởi chạy
+- **THEN** tài liệu API truy cập được tại `/docs` trên cổng `8000`
+
+#### Scenario: Kết quả giống nhau giữa container và local
+
+- **WHEN** gửi cùng một request tới ứng dụng chạy trong container và tới ứng dụng chạy local
+- **THEN** hai phản hồi có cùng HTTP status, cùng cấu trúc và cùng nội dung kết quả
+
+### Requirement: Ứng dụng stateless, không lưu dữ liệu người dùng
+
+Ứng dụng SHALL hoạt động stateless với nội dung người dùng: sau khi một request kết thúc, ứng dụng MUST KHÔNG lưu giữ văn bản đầu vào, key, tên file, file tải lên hay kết quả mã hóa/giải mã ở bất kỳ nơi nào có thể truy xuất lại, và MUST KHÔNG có phiên làm việc (session). Khi đặt `DATABASE_URL`, ứng dụng SHALL chỉ được lưu metadata thao tác theo capability `operation-history`, và chỉ đọc lại metadata đó qua `GET /api/history` theo `history-api` và `history-access`. Mỗi request SHALL được xử lý độc lập: hai request giống hệt nhau MUST cho kết quả giống hệt nhau, và kết quả của một request MUST KHÔNG bị ảnh hưởng bởi các request trước đó, bởi thứ tự gửi request hay bởi dữ liệu lịch sử. (Truy vết: docx §8; quyết định chủ sở hữu 2026-09-28)
+
+#### Scenario: Hai request giống nhau cho kết quả giống nhau
+
+- **WHEN** gửi cùng một request mã hóa hai lần liên tiếp
+- **THEN** cả hai lần đều trả về cùng một kết quả và cùng HTTP status
+
+#### Scenario: Request không bị ảnh hưởng bởi request trước đó
+
+- **WHEN** gửi một request mã hóa với văn bản và khóa bất kỳ
+- **AND** sau đó gửi một request khác với văn bản và khóa khác
+- **THEN** kết quả của request sau chỉ phụ thuộc vào đầu vào của chính nó, không phụ thuộc vào request trước
+
+#### Scenario: Không truy xuất lại được nội dung sau khi request kết thúc
+
+- **WHEN** người dùng tải lên một file và nhận kết quả xử lý
+- **THEN** ứng dụng không giữ lại file đã tải lên, key hay kết quả đó sau khi phản hồi được trả về
+- **AND** không có endpoint nào trả lại nội dung của thao tác đã hoàn tất
+
+#### Scenario: Lịch sử chỉ chứa metadata
+
+- **WHEN** client đọc `GET /api/history` hoặc xem schema `HistoryItem` trong OpenAPI
+- **THEN** không có trường nào chứa văn bản, key, `a`, `b`, tên file, nội dung file hay kết quả
+- **AND** endpoint duy nhất liên quan tới lịch sử là `/api/history`
+
+### Requirement: Trần hạ tầng 64 MiB bảo vệ mọi request
+
+Theo ngoại lệ hạ tầng được chủ sở hữu phê duyệt, ứng dụng SHALL từ chối ở tầng 0 mọi request có `Content-Length` lớn hơn 64 MiB trước khi đọc hoặc phân tích thân yêu cầu. Đây là trần chống lạm dụng của hạ tầng OpenSpec, MUST NOT thay đổi giới hạn nghiệp vụ file 5 MiB trong docx, giới hạn RSA file 1.000.000 byte, hoặc được coi là thông báo nghiệp vụ bổ sung của các scope đó. Việc chọn thông báo và envelope SHALL dựa trên tuyến: request tới API file hiện hữu SHALL dùng thông báo file hiện có `File vượt quá dung lượng tối đa 5 MB.`; request tới route hiện hữu khác SHALL dùng `Yêu cầu vượt quá dung lượng cho phép.`; cả hai giữ exact error envelope hai trường `success` và `message`, không machine code. Riêng bốn route bắt đầu `/api/rsa/` và sáu route bắt đầu `/api/dh/` SHALL trả HTTP 413 với exact envelope bốn trường `{"success":false,"code":"REQUEST_TOO_LARGE","message":"Yêu cầu vượt quá dung lượng cho phép.","field":null}`, kể cả multipart `/api/rsa/encrypt` và `/api/dh/caesar`. Thông báo công khai generic MUST NOT nêu con số 64 MiB. Request có `Content-Length` bằng hoặc nhỏ hơn 64 MiB, hoặc không có/không đọc được header này, SHALL đi tiếp tới bước phân tích và validation tương ứng. Hành vi này MUST giống nhau khi chạy local và trong container. Mọi route không phải RSA và không phải DH MUST giữ nguyên behavior baseline. (Truy vết: ngoại lệ hạ tầng OpenSpec đã được chấp thuận; main spec hiện tại; quyết định chủ sở hữu RSA Q2, Q5, Q8, Q15; Scope DH BE-07; quyết định chủ sở hữu DH Q6)
+
+#### Scenario: Request text vượt trần hạ tầng
+
+- **WHEN** client gửi request tới API văn bản không phải RSA hoặc DH với `Content-Length` lớn hơn 64 MiB
+- **THEN** ứng dụng từ chối trước khi phân tích body với HTTP 413
+- **AND** thân phản hồi là `{"success": false, "message": "Yêu cầu vượt quá dung lượng cho phép."}`
+- **AND** thông báo không nêu con số 64 MiB
+
+#### Scenario: Request file vượt trần hạ tầng
+
+- **WHEN** client gửi request tới API file không phải RSA hoặc DH với `Content-Length` lớn hơn 64 MiB
+- **THEN** ứng dụng từ chối trước khi phân tích multipart với HTTP 413
+- **AND** thân phản hồi là `{"success": false, "message": "File vượt quá dung lượng tối đa 5 MB."}`
+
+#### Scenario: Request RSA vượt trần hạ tầng
+
+- **WHEN** client gửi JSON hoặc multipart tới một trong bốn RSA route với `Content-Length` lớn hơn 64 MiB
+- **THEN** ứng dụng từ chối trước khi đọc/phân tích body với HTTP 413
+- **AND** thân phản hồi là `{"success":false,"code":"REQUEST_TOO_LARGE","message":"Yêu cầu vượt quá dung lượng cho phép.","field":null}`
+
+#### Scenario: DH request vượt trần dùng four-field envelope
+
+- **WHEN** bất kỳ route `/api/dh/*` nhận `Content-Length` lớn hơn 64 MiB
+- **THEN** HTTP 413 được trả trước khi đọc body
+- **AND** body đúng bằng `{"success":false,"code":"REQUEST_TOO_LARGE","message":"Yêu cầu vượt quá dung lượng cho phép.","field":null}`
+- **AND** không thay đổi envelope của route không phải DH
+
+#### Scenario: Request không vượt trần tiếp tục được validate
+
+- **WHEN** request có `Content-Length` bằng hoặc nhỏ hơn 64 MiB, hoặc không có/không đọc được header này
+- **THEN** tầng 0 không từ chối request vì trần hạ tầng
+- **AND** request tiếp tục tới bước phân tích body và validation nghiệp vụ tương ứng
+
+#### Scenario: Trần hạ tầng giống nhau giữa local và container
+
+- **WHEN** gửi cùng một request vượt 64 MiB tới ứng dụng chạy local và ứng dụng chạy trong container
+- **THEN** hai môi trường trả cùng HTTP status, cùng error envelope và cùng thông báo theo tuyến
