@@ -1,0 +1,118 @@
+name: Build and test staging
+on:
+  workflow_dispatch:
+    inputs:
+      bootstrap_only:
+        description: Build private image only before Render services exist; cannot be promoted
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: render-staging
+  cancel-in-progress: false
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require staging branch
+        env:
+          REF: ${{ github.ref }}
+        run: test "$REF" = refs/heads/staging
+  checks:
+    needs: guard
+    uses: ./.github/workflows/checks.yml
+    permissions:
+      contents: read
+  staging:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Require private GitHub repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          test "$(gh api "repos/$GITHUB_REPOSITORY" --jq .private)" = true
+          python3 deploy/check-package.py --allow-missing
+      - name: Require configured services
+        if: ${{ !inputs.bootstrap_only }}
+        env:
+          SERVICE: ${{ vars.RENDER_STAGING_SERVICE_ID }}
+          URL: ${{ vars.RENDER_STAGING_URL }}
+          API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          test -n "$SERVICE" && test -n "$URL" && test -n "$API_KEY"
+      - name: Build private candidate image
+        id: image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/quanh712/cipher-workbench:sha-${{ github.sha }}
+          build-args: GIT_SHA=${{ github.sha }}
+          provenance: false
+          sbom: false
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
+      - name: Verify GHCR package remains private
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 deploy/check-package.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Test built image with real browser and API
+        env:
+          IMAGE: ghcr.io/quanh712/cipher-workbench@${{ steps.image.outputs.digest }}
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:8000
+        run: |
+          docker run --detach --name public-candidate --publish 127.0.0.1:8000:8000 --env PORT=8000 "$IMAGE"
+          trap 'docker logs public-candidate; docker rm -f public-candidate' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/api/health > /dev/null; then break; fi
+            sleep 2
+          done
+          curl --fail --silent http://127.0.0.1:8000/api/health > /dev/null
+          cd frontend
+          npm ci
+          npx playwright install --with-deps chromium
+          npx playwright test --config playwright.public.config.ts
+      - name: Deploy exact digest and verify live staging
+        if: ${{ !inputs.bootstrap_only }}
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          IMAGE: ghcr.io/quanh712/cipher-workbench@${{ steps.image.outputs.digest }}
+          REVISION: ${{ github.sha }}
+          SERVICE: ${{ vars.RENDER_STAGING_SERVICE_ID }}
+          URL: ${{ vars.RENDER_STAGING_URL }}
+        run: python3 deploy/release.py deploy --image "$IMAGE" --revision "$REVISION" --service-id "$SERVICE" --url "$URL" --output staging-release.json
+      - name: Verify deployed staging in real browser
+        if: ${{ !inputs.bootstrap_only }}
+        working-directory: frontend
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ vars.RENDER_STAGING_URL }}
+        run: npx playwright test --config playwright.public.config.ts
+      - uses: actions/upload-artifact@v4
+        if: ${{ !inputs.bootstrap_only }}
+        with:
+          name: staging-release
+          path: staging-release.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Report bootstrap digest
+        if: ${{ inputs.bootstrap_only }}
+        env:
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: echo "Private bootstrap image ghcr.io/quanh712/cipher-workbench@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

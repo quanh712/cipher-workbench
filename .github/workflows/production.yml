@@ -1,0 +1,56 @@
+name: Promote tested image to production
+on:
+  workflow_dispatch:
+    inputs:
+      staging_run_id:
+        description: Successful staging branch workflow run ID
+        required: true
+        type: string
+      confirmation:
+        description: Type production to deploy the tested digest
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: render-production
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Require manual main promotion
+        env:
+          REF: ${{ github.ref }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          RUN_ID: ${{ inputs.staging_run_id }}
+        run: |
+          test "$REF" = refs/heads/main
+          test "$CONFIRMATION" = production
+          [[ "$RUN_ID" =~ ^[0-9]+$ ]]
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download evidence from staging workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ inputs.staging_run_id }}
+        run: gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name staging-release --dir release-evidence
+      - name: Verify evidence and promote identical digest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_STAGING_SERVICE_ID: ${{ vars.RENDER_STAGING_SERVICE_ID }}
+          RENDER_STAGING_URL: ${{ vars.RENDER_STAGING_URL }}
+          RENDER_PRODUCTION_SERVICE_ID: ${{ vars.RENDER_PRODUCTION_SERVICE_ID }}
+          RENDER_PRODUCTION_URL: ${{ vars.RENDER_PRODUCTION_URL }}
+          RUN_ID: ${{ inputs.staging_run_id }}
+        run: python3 deploy/release.py promote --evidence release-evidence/staging-release.json --run-id "$RUN_ID"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-release
+          path: production-release.json
+          retention-days: 30
+          if-no-files-found: error
