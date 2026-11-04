@@ -81,6 +81,7 @@ services:
       SQLITE_BACKUP_INTERVAL_SECONDS: ${SQLITE_BACKUP_INTERVAL_SECONDS:-3600}
       SQLITE_BACKUP_RETENTION_DAYS: ${SQLITE_BACKUP_RETENTION_DAYS:-7}
     command: ["python", "/opt/sqlite-backup.py"]
+    mem_limit: ${SQLITE_BACKUP_MEMORY:-128m}
     volumes:
       - type: volume
         source: history-data

@@ -3,6 +3,7 @@ services:
   frontend:
     image: cipher-workbench-frontend:algorithm-names-20261013
     volumes:
+      - ./deploy/nginx.low-memory.conf:/etc/nginx/nginx.conf:ro
       - ./deploy/nginx.18081-dh.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - application
