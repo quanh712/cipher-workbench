@@ -1,0 +1,637 @@
+.rsa {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.rsa__intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.rsa__intro h2 {
+  margin: 0 0 6px;
+  font-size: clamp(28px, 4vw, 36px);
+  letter-spacing: -0.025em;
+}
+
+.rsa__intro p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.rsa__flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.rsa__flow li {
+  position: relative;
+  min-width: 0;
+  padding: 15px 18px 15px 22px;
+  border-left: 1px solid var(--border);
+}
+
+.rsa__flow li:first-child {
+  border-left: 0;
+}
+
+.rsa__flow li:not(:last-child)::after {
+  position: absolute;
+  right: -7px;
+  top: calc(50% - 7px);
+  z-index: 1;
+  width: 13px;
+  height: 13px;
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  transform: rotate(45deg);
+  content: "";
+}
+
+.rsa__flow strong,
+.rsa__flow span {
+  display: block;
+}
+
+.rsa__flow strong {
+  margin-bottom: 3px;
+  font-size: 14px;
+}
+
+.rsa__flow span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.rsa__section {
+  min-width: 0;
+}
+
+.rsa__section .panel__header {
+  flex-wrap: wrap;
+}
+
+.rsa__section .panel__header h2 {
+  font-size: 14px;
+}
+
+.rsa__section .panel__header code {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rsa__section-body {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding: 20px;
+}
+
+.rsa__section-body > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.rsa__help {
+  max-width: 75ch;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.rsa__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rsa__presets [aria-pressed="true"] {
+  border-color: var(--focus);
+  box-shadow: inset 0 0 0 1px var(--focus);
+}
+
+.rsa__fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.rsa__field {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.rsa__field input,
+.rsa__field textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid var(--control-border);
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 400;
+}
+
+.rsa__field textarea {
+  min-height: 92px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.rsa__field [aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.rsa__field small {
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rsa__field--text {
+  width: 100%;
+}
+
+.rsa__action-line {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+.rsa__action-line .rsa__field {
+  flex: 1 1 180px;
+  max-width: 320px;
+}
+
+.rsa__message {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--muted);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.rsa__message--pending {
+  border: 1px dashed var(--control-border);
+}
+
+.rsa__message--success {
+  background: var(--success-surface);
+  color: var(--success);
+}
+
+.rsa__message--error {
+  background: var(--danger-surface);
+  color: var(--danger);
+}
+
+.rsa__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin: 2px 0 0;
+}
+
+.rsa__facts--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.rsa__facts div {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.rsa__facts dt {
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rsa__facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.rsa__facts .rsa__fact--public {
+  border-left: 3px solid var(--focus);
+}
+
+.rsa__facts .rsa__fact--private {
+  border-left: 3px solid var(--accent);
+}
+
+.rsa__details {
+  width: 100%;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.rsa__details summary {
+  width: fit-content;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.rsa__details summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.rsa__trace {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding-top: 0;
+}
+
+.rsa__trace summary {
+  width: auto;
+  min-height: 44px;
+  padding: 12px;
+  overflow-wrap: anywhere;
+}
+
+.rsa__trace .rsa__table-wrap {
+  margin-top: 0;
+  padding: 0 12px 12px;
+}
+
+.rsa__table-wrap {
+  width: 100%;
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.rsa__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
+.rsa__table caption {
+  padding: 0 0 7px;
+  color: var(--muted);
+  text-align: left;
+  font-size: 12px;
+}
+
+.rsa__table th,
+.rsa__table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.rsa__table th {
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.rsa__table-row--hit {
+  background: var(--success-surface);
+}
+
+.rsa__table-row--error {
+  background: var(--danger-surface);
+}
+
+.rsa__explanation {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.rsa__explanation > div {
+  min-width: 0;
+  padding: 20px 22px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  border-radius: 0 8px 8px 0;
+}
+
+.rsa__explanation h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.rsa__explanation p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.rsa__explanation p + p {
+  margin-top: 12px;
+}
+
+@media (max-width: 800px) {
+  .rsa__flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rsa__flow li:nth-child(3) {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .rsa__flow li:nth-child(4) {
+    border-top: 1px solid var(--border);
+  }
+
+  .rsa__flow li:nth-child(2)::after {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .rsa__intro {
+    display: grid;
+    gap: 10px;
+  }
+
+  .rsa__flow,
+  .rsa__fields,
+  .rsa__facts,
+  .rsa__facts--three,
+  .rsa__explanation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rsa__flow li {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .rsa__flow li:first-child {
+    border-top: 0;
+  }
+
+  .rsa__flow li::after {
+    display: none;
+  }
+
+  .rsa__section-body {
+    padding: 16px;
+  }
+}
+
+.rsa__section-body > .mode-section,
+.rsa__key-form {
+  width: 100%;
+}
+.rsa__key-form {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  min-width: 0;
+}
+.rsa .button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rsa__section-body .status {
+  width: 100%;
+}
+.rsa__flow {
+  margin-top: 12px;
+}
+.rsa__field textarea[readonly] {
+  background: var(--surface);
+}
+
+.rsa__section-body > .mode-section {
+  margin-bottom: 4px;
+}
+
+.rsa__mode-help {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 4px;
+  line-height: 1.75;
+}
+
+.rsa__tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rsa__tabs button {
+  min-height: 46px;
+  padding: 10px 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.rsa__tabs [aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.rsa__tabs button:focus-visible,
+.rsa__signature-modes button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.rsa__encryption-panel:not([hidden]) {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.rsa__demo-label {
+  padding: 4px 9px;
+  border: 1px dashed var(--control-border);
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rsa__demo-note {
+  width: 100%;
+  padding: 14px;
+  border-left: 3px solid var(--focus);
+  background: var(--surface);
+}
+
+.rsa__demo-note p {
+  max-width: 75ch;
+  margin: 6px 0 12px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.rsa__signature-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.rsa__signature-result {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+}
+
+.rsa__signature-result:empty {
+  display: none;
+}
+
+.rsa__signature-result .rsa__message strong,
+.rsa__signature-result .rsa__message span {
+  display: block;
+}
+
+.rsa__message--invalid {
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.rsa__signature-steps {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding-left: 24px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.rsa__signature-details {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.rsa__signature-details summary {
+  width: auto;
+  overflow-wrap: anywhere;
+}
+
+.rsa__signature-result + .rsa__details h2:not(:first-child) {
+  margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+  .rsa__signature-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rsa__tabs button {
+    flex: 1;
+    padding-inline: 12px;
+  }
+}
+
+.rsa__transform-panel {
+  width: 100%;
+}
+
+.rsa__transform-panel > .rsa__field {
+  padding: 14px;
+}
+
+.rsa__transform-panel > .button-group {
+  padding: 0 14px 14px;
+}
+
+.rsa__transform-panel > .status {
+  margin: 0;
+}
+
+.rsa__signature-input,
+.rsa__signature-outcome {
+  width: 100%;
+}
+.rsa__signature-fields {
+  padding: 14px;
+  grid-template-columns: minmax(0, 1fr);
+}
+.rsa__signature-outcome .rsa__facts {
+  padding: 14px;
+  margin: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+.rsa__signature-detail {
+  padding: 14px;
+}
+.rsa__signature-input > .status,
+.rsa__signature-outcome > .status {
+  margin: 0;
+}
+.rsa__signature-fields > div {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.rsa__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+.rsa__toolbar > .rsa__tabs {
+  margin: 0;
+  min-width: 0;
+}
+.rsa__toolbar-actions {
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .rsa__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .rsa__toolbar > .rsa__tabs {
+    width: 100%;
+  }
+}

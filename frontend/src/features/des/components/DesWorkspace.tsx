@@ -1,0 +1,240 @@
+import { CipherIntro } from "../../../shared/components/CipherIntro";
+import { CipherActions } from "../../../shared/components/CipherActions";
+import { useEffect, useRef, useState } from "react";
+import { CipherInputPanel } from "../../../shared/components/CipherInputPanel";
+import { CipherModeSelector } from "../../../shared/components/CipherModeSelector";
+import { Notification } from "../../../shared/components/Notification";
+import type { DesCipherController } from "../hooks/useDesCipher";
+import { DesKeyInput } from "./DesKeyInput";
+import { DesResultPanel } from "./DesResultPanel";
+import { KeyAlignedColumns } from "../../../shared/components/KeyAlignedColumns";
+import { readTextFile, validateTextFile } from "../../../shared/utils/textFileValidation";
+
+export function DesWorkspace({ cipher }: { cipher: DesCipherController }) {
+  const workspace = useRef<HTMLDivElement>(null);
+  const [filePreview, setFilePreview] = useState<{
+    file: File;
+    text: string;
+    error: string | null;
+  } | null>(null);
+  const canPreviewFile = !cipher.isDemo && cipher.file && !validateTextFile(cipher.file);
+
+  useEffect(() => {
+    const file = cipher.file;
+    if (cipher.isDemo || !file || validateTextFile(file)) return;
+    let current = true;
+    readTextFile(file).then(
+      (text) => {
+        if (current) setFilePreview({ file, text, error: null });
+      },
+      () => {
+        if (current)
+          setFilePreview({
+            file,
+            text: "",
+            error: "Không thể đọc nội dung file để xem trước.",
+          });
+      },
+    );
+    return () => {
+      current = false;
+    };
+  }, [cipher.file, cipher.isDemo]);
+
+  const currentPreview = filePreview?.file === cipher.file ? filePreview : null;
+
+  async function submit() {
+    const errors = await cipher.processCipher();
+    if (!errors) return;
+    const label = errors.input
+      ? "Nội dung đầu vào DES"
+      : errors.file
+        ? "Chọn file DES"
+        : errors.key
+          ? "Khóa DES"
+          : "IV DES";
+    workspace.current?.querySelector<HTMLElement>(`[aria-label="${label}"]`)?.focus();
+  }
+
+  async function pasteInput() {
+    try {
+      cipher.setText(await navigator.clipboard.readText());
+      cipher.setNotice({ kind: "success", message: "Đã dán nội dung từ clipboard." });
+    } catch {
+      cipher.setNotice({ kind: "error", message: "Không thể đọc nội dung clipboard." });
+    }
+  }
+
+  async function copyInput() {
+    try {
+      const text =
+        cipher.inputType === "file" && cipher.file && !cipher.isDemo
+          ? await readTextFile(cipher.file)
+          : cipher.text;
+      await navigator.clipboard.writeText(text);
+      cipher.setNotice({ kind: "success", message: "Đã sao chép đầu vào." });
+    } catch {
+      cipher.setNotice({ kind: "error", message: "Không thể sao chép đầu vào." });
+    }
+  }
+
+  return (
+    <div className="cipher-workspace" ref={workspace} aria-busy={cipher.isBusy}>
+      <CipherIntro
+        title="DES"
+        description="Mã hóa và giải mã theo khối 64 bit với cấu trúc Feistel 16 vòng."
+      />
+      {cipher.isDemo && (
+        <p className="des-demo-banner" role="note">
+          Dữ liệu mô phỏng — kết quả không được tính từ nội dung hoặc khóa bạn nhập.
+        </p>
+      )}
+      <CipherModeSelector value={cipher.mode} disabled={cipher.isBusy} onChange={cipher.setMode} />
+      <div className="helper-row">
+        <span>
+          DES xử lý block 64 bit, dùng khóa 64 bit với 56 bit hiệu dụng và cấu trúc Feistel 16 vòng.
+          Giải mã dùng khóa con theo thứ tự ngược.
+        </span>
+        <button
+          className="button button--secondary"
+          type="button"
+          disabled={cipher.isBusy}
+          onClick={() => {
+            setFilePreview(null);
+            cipher.loadExample();
+          }}
+        >
+          Tạo ví dụ
+        </button>
+      </div>
+      {!cipher.isDemo && (
+        <section className="des-options" aria-label="Tùy chọn DES">
+          {cipher.inputType === "text" && (
+            <label>
+              <span className="section-label">
+                Định dạng {cipher.mode === "encrypt" ? "bản rõ" : "kết quả"}
+              </span>
+              <select
+                aria-label="Định dạng DES"
+                value={cipher.format}
+                disabled={cipher.isBusy}
+                onChange={(event) =>
+                  cipher.setFormat(event.target.value === "hex" ? "hex" : "text")
+                }
+              >
+                <option value="text">Văn bản UTF-8 (PKCS#7)</option>
+                <option value="hex">HEX (không gỡ/thêm padding)</option>
+              </select>
+            </label>
+          )}
+          <label>
+            <span className="section-label">Chế độ mã khối</span>
+            <select
+              aria-label="Chế độ mã khối DES"
+              value={cipher.cipherMode}
+              disabled={cipher.isBusy}
+              onChange={(event) =>
+                cipher.setCipherMode(event.target.value === "CBC" ? "CBC" : "ECB")
+              }
+            >
+              <option>ECB</option>
+              <option>CBC</option>
+            </select>
+          </label>
+          {cipher.cipherMode === "CBC" && (
+            <label>
+              <span className="section-label">IV (16 ký tự HEX)</span>
+              <input
+                aria-label="IV DES"
+                autoComplete="off"
+                spellCheck={false}
+                value={cipher.iv}
+                disabled={cipher.isBusy}
+                aria-invalid={Boolean(cipher.fieldErrors.iv)}
+                aria-describedby="des-iv-note"
+                onChange={(event) => cipher.setIv(event.target.value)}
+              />
+              <span id="des-iv-note">
+                Giữ IV cùng bản mã. IV sai vẫn có thể giải mã thành công nhưng sai 8 byte đầu.
+              </span>
+              {cipher.fieldErrors.iv && <span role="alert">{cipher.fieldErrors.iv}</span>}
+            </label>
+          )}
+        </section>
+      )}
+      {cipher.roundTripWarning && (
+        <p className="des-warning" role="status">
+          Văn bản vượt 2.621.439 byte UTF-8: bản mã sẽ vượt giới hạn giải mã 5 MiB. Hãy chia nhỏ dữ
+          liệu nếu cần giải mã lại qua API.
+        </p>
+      )}
+      <KeyAlignedColumns>
+        <div className="workspace__input-column">
+          <CipherInputPanel
+            inputType={cipher.inputType}
+            mode={cipher.mode}
+            text={cipher.text}
+            file={cipher.file}
+            fileText={currentPreview?.text ?? ""}
+            metadataOnly={!canPreviewFile}
+            fileKind={cipher.isDemo ? "data" : "text"}
+            fileAriaLabel="Chọn file DES"
+            fileAccept={cipher.isDemo ? undefined : ".txt,text/plain"}
+            fileHint={
+              cipher.isDemo
+                ? "Loại file và dung lượng sẽ được xác nhận theo API DES."
+                : "Chỉ nhận file .txt UTF-8, tối đa 5 MiB. File encrypt ra HEX; file decrypt luôn trả văn bản."
+            }
+            showErrorWithoutInput
+            ariaLabel="Đầu vào DES"
+            textAriaLabel="Nội dung đầu vào DES"
+            error={
+              cipher.fieldErrors.input ?? cipher.fieldErrors.file ?? currentPreview?.error ?? null
+            }
+            disabled={cipher.isBusy}
+            isReadingFile={Boolean(canPreviewFile && !currentPreview)}
+            onInputTypeChange={cipher.setInputType}
+            onTextChange={cipher.setText}
+            onFileChange={(file) => {
+              setFilePreview(null);
+              cipher.setFile(file);
+            }}
+            onClear={() => {
+              setFilePreview(null);
+              cipher.resetInput();
+            }}
+            onPaste={pasteInput}
+            onCopy={copyInput}
+          />
+          <DesKeyInput
+            isDemo={cipher.isDemo}
+            value={cipher.key}
+            error={cipher.fieldErrors.key}
+            disabled={cipher.isBusy}
+            onChange={cipher.setKey}
+          />
+          <CipherActions
+            disabled={cipher.isBusy}
+            onReset={() => {
+              setFilePreview(null);
+              cipher.resetAll();
+            }}
+          >
+            <button
+              className="button button--primary"
+              type="button"
+              disabled={!cipher.canSubmit}
+              onClick={submit}
+            >
+              {cipher.isBusy ? "Đang xử lý…" : cipher.mode === "encrypt" ? "Mã hóa" : "Giải mã"}
+            </button>
+          </CipherActions>
+        </div>
+        <DesResultPanel cipher={cipher} />
+      </KeyAlignedColumns>
+      {cipher.notice && (
+        <Notification notice={cipher.notice} onClose={() => cipher.setNotice(null)} />
+      )}
+    </div>
+  );
+}
