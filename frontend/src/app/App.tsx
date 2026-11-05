@@ -1,3 +1,4 @@
+import { PrivacyPolicy } from "../shared/components/PrivacyPolicy";
 import { getHistoryStorageWarning } from "../features/history/services/browserHistory";
 import { ServerWaitStatus } from "../shared/components/ServerWaitStatus";
 import { DiffieHellmanWorkspace } from "../features/diffieHellman/components/DiffieHellmanWorkspace";
@@ -249,6 +250,7 @@ export function App({
           </div>
         </div>
       </main>
+      <PrivacyPolicy />
     </>
   );
 }

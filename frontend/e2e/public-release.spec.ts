@@ -194,3 +194,43 @@ test("keeps RSA keys through history and offers a compact mobile selector", asyn
   await page.getByRole("combobox", { name: "Chọn thuật toán" }).selectOption("caesar");
   await expect(page.locator("#algorithm-panel-caesar pre.output")).toHaveText("Khoor Zruog");
 });
+
+test("privacy policy opens from footer and preserves work on desktop and mobile", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const input = page.getByRole("textbox", { name: "Nội dung đầu vào", exact: true });
+  await page.getByRole("button", { name: "Tạo ví dụ", exact: true }).click();
+  await expect(input).toHaveValue("Hello World");
+  for (const viewport of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const link = page.getByRole("link", { name: "Chính sách bảo mật", exact: true });
+    await link.click();
+    const dialog = page.getByRole("dialog", { name: "Chính sách bảo mật", exact: true });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText("Chính sách đang được hoàn thiện.");
+    await expect(dialog).toContainText("Singapore");
+    await expect(dialog).toContainText("1 giờ");
+    await expect(dialog).not.toContainText("[ĐIỀN");
+    await expect(dialog).not.toContainText("[KIỂM TRA");
+    expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+      true,
+    );
+    await dialog
+      .getByRole("heading", { name: "6. Bảo vệ dữ liệu và cập nhật" })
+      .scrollIntoViewIfNeeded();
+    await dialog.getByRole("button", { name: "Đóng", exact: true }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(link).toBeFocused();
+    await expect(input).toHaveValue("Hello World");
+    await link.click();
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+  }
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.goto("/#chinh-sach-bao-mat");
+  await expect(page.getByRole("dialog", { name: "Chính sách bảo mật", exact: true })).toBeVisible();
+});
