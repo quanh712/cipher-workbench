@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   promote:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Require manual main promotion
@@ -30,7 +30,7 @@ jobs:
           test "$REF" = refs/heads/main
           test "$CONFIRMATION" = production
           [[ "$RUN_ID" =~ ^[0-9]+$ ]]
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Download evidence from staging workflow
@@ -48,7 +48,7 @@ jobs:
           RENDER_PRODUCTION_URL: ${{ vars.RENDER_PRODUCTION_URL }}
           RUN_ID: ${{ inputs.staging_run_id }}
         run: python3 deploy/release.py promote --evidence release-evidence/staging-release.json --run-id "$RUN_ID"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: production-release
           path: production-release.json
