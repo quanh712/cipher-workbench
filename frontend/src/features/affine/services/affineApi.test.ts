@@ -10,6 +10,7 @@ describe("Affine API contract", () => {
     });
 
     expect(vi.mocked(fetch)).toHaveBeenCalledWith("/api/affine/encrypt", {
+      signal: expect.any(AbortSignal),
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: '{"text":"HELLO","a":9007199254740993,"b":-18}',

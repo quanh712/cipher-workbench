@@ -267,7 +267,8 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
           fireEvent.change(input("Số mũ riêng X_A"), { target: { value: "9" } });
         if (action === "reset") fireEvent.click(screen.getByRole("button", { name: "Đặt lại" }));
         if (action === "cipher") fireEvent.click(screen.getByRole("tab", { name: /Caesar/ }));
-        if (action === "header") fireEvent.click(screen.getByRole("button", { name: "Làm mới" }));
+        if (action === "header")
+          fireEvent.click(screen.getByRole("button", { name: "Đặt lại tất cả" }));
         if (action === "example") example();
         expect(fetch.mock.calls[0][1]!.signal!.aborted).toBe(true);
         if (action === "cipher" || action === "header") openDh();

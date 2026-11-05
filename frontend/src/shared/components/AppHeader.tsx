@@ -13,7 +13,15 @@ export function AppHeader({ disabled, onReset }: AppHeaderProps) {
   return (
     <nav className="nav" aria-label="Điều hướng chính">
       <div className="nav__inner">
-        <a className="logo brand-lockup" href="/" aria-label="Cipher Workbench">
+        <a
+          className="logo brand-lockup"
+          href="#"
+          onClick={(event) => {
+            event.preventDefault();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          aria-label="Cipher Workbench"
+        >
           <CipherMark busy={disabled} />
           <span className="brand-name">
             <span className="brand-name__cipher">Cipher</span> <span>Workbench</span>
@@ -23,7 +31,7 @@ export function AppHeader({ disabled, onReset }: AppHeaderProps) {
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
           <button className="refresh-button" type="button" onClick={onReset} disabled={disabled}>
             <span aria-hidden="true">↻</span>
-            Làm mới
+            Đặt lại tất cả
           </button>
         </div>
       </div>

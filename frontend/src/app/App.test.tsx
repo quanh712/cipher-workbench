@@ -362,6 +362,7 @@ describe("Cipher Workbench", () => {
     await user.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
     await user.click(screen.getByRole("button", { name: "Mã hóa" }));
     expect(vi.mocked(fetch)).toHaveBeenCalledWith("/api/columnar/encrypt", {
+      signal: expect.any(AbortSignal),
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: '{"text":"khoacongnghethongtin","key":"3,6,2,1,5,4"}',
@@ -381,10 +382,10 @@ describe("Cipher Workbench", () => {
       "khoacongnghethongtin",
     );
     expect(screen.getByRole("tabpanel", { name: "Văn bản" })).toHaveTextContent(
-      "Kết quả sẽ hiển thị ở đây sau khi xử lý.",
+      "agnonokntioetchghghn",
     );
 
-    await user.click(screen.getByRole("button", { name: /Làm mới/ }));
+    await user.click(screen.getByRole("button", { name: /Đặt lại tất cả/ }));
     await user.click(columnar);
     expect(screen.getByRole("textbox", { name: "Nội dung đầu vào" })).toHaveValue("");
     expect(screen.getByRole("textbox", { name: "Khóa cột" })).toHaveValue("");
@@ -428,7 +429,7 @@ describe("Cipher Workbench", () => {
     await user.click(screen.getByRole("tab", { name: /Playfair/ }));
     await user.type(screen.getByRole("textbox", { name: "Nội dung đầu vào" }), "Draft");
     await user.type(screen.getByRole("textbox", { name: "Khóa Playfair" }), "Key");
-    await user.click(screen.getByRole("button", { name: /Làm mới/ }));
+    await user.click(screen.getByRole("button", { name: /Đặt lại tất cả/ }));
 
     expect(screen.getByRole("tab", { name: /Caesar/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("textbox", { name: "Nội dung đầu vào" })).toBeInTheDocument();

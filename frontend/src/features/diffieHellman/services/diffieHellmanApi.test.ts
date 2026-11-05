@@ -265,14 +265,14 @@ describe("Diffie–Hellman target HTTP adapter", () => {
       await Promise.resolve();
       expect(fetch).toHaveBeenCalledTimes(1);
       // jsdom schedules a storage event when browser history is saved.
-      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(1);
       expect(vi.getTimerCount()).toBe(0);
     },
   );
   it("keeps the deadline active while reading the response body", async () => {
     vi.useFakeTimers();
     const response = json(exchange());
-    vi.spyOn(response, "text").mockReturnValue(new Promise(() => {}));
+    vi.spyOn(response, "arrayBuffer").mockReturnValue(new Promise(() => {}));
     mock(response);
     const assertion = expect(run()).rejects.toMatchObject({ code: "TIMEOUT" });
     await vi.advanceTimersByTimeAsync(15000);
@@ -295,7 +295,7 @@ describe("Diffie–Hellman target HTTP adapter", () => {
     await assertion;
     expect(fetch.mock.calls[0][1].signal.aborted).toBe(true);
     // jsdom schedules a storage event when browser history is saved.
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(1);
     expect(vi.getTimerCount()).toBe(0);
   });
   it("clears deadline and removes caller listener after success", async () => {
@@ -306,7 +306,7 @@ describe("Diffie–Hellman target HTTP adapter", () => {
     await diffieHellmanApi.exchange(createDhPresetRequest(), controller.signal);
     expect(remove).toHaveBeenCalledWith("abort", expect.any(Function));
     // jsdom schedules a storage event when browser history is saved.
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(1);
     expect(vi.getTimerCount()).toBe(0);
   });
 });

@@ -32,13 +32,7 @@ export function useDesCipher(gateway: DesGateway | null, active = true) {
   const [previousActive, setPreviousActive] = useState(active);
   if (previousActive !== active) {
     setPreviousActive(active);
-    if (!active) {
-      setStatus("idle");
-      setSnapshot(null);
-      setResult(null);
-      setNotice(null);
-      setFieldErrors({});
-    }
+    if (!active && status === "loading") setStatus(result ? "success" : "idle");
   }
   const pending = useRef<AbortController | null>(null);
   const version = useRef(0);

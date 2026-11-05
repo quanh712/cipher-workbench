@@ -54,7 +54,7 @@ describe("RSA app registration", () => {
     fireEvent.click(rsaTab);
     expect(screen.getByRole("textbox", { name: "Thông điệp" })).toHaveValue("Nội dung mới 😀");
     expect(screen.getByRole("textbox", { name: "p · số nguyên tố" })).toHaveValue("101");
-    fireEvent.click(screen.getByRole("button", { name: "Làm mới" }));
+    fireEvent.click(screen.getByRole("button", { name: "Đặt lại tất cả" }));
     expect(screen.getByRole("tab", { name: /Caesar/ })).toHaveAttribute("aria-selected", "true");
     fireEvent.click(rsaTab);
     for (const input of screen.getAllByRole("textbox")) expect(input).toHaveValue("");

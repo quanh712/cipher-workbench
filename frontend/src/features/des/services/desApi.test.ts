@@ -24,7 +24,7 @@ describe("DES API contract", () => {
     expect(fetch).toHaveBeenCalledWith(
       "/api/des/encrypt",
       expect.objectContaining({
-        signal,
+        signal: expect.any(AbortSignal),
         body: JSON.stringify({
           text: request.text,
           key: request.key,
@@ -89,7 +89,7 @@ describe("DES API contract", () => {
     for (const [index, mode] of ["content", "file"].entries()) {
       const init = fetch.mock.calls[index][1];
       expect(init?.headers).toBeUndefined();
-      expect(init?.signal).toBe(signal);
+      expect(init?.signal).toBeInstanceOf(AbortSignal);
       const form = init?.body;
       expect(form).toBeInstanceOf(FormData);
       if (!(form instanceof FormData)) throw new Error("Expected FormData");

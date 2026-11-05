@@ -115,7 +115,7 @@ describe("DES real gateway controller", () => {
       complete({ blob: new Blob(["stale"]), filename: "stale.txt" });
       await pending;
     });
-    expect(result.current.result).toBeNull();
+    expect(result.current.result?.text).toBe("preview");
     expect(result.current.notice).toBeNull();
   });
 });

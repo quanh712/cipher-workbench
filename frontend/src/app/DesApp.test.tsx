@@ -44,8 +44,8 @@ describe("DES app registration", () => {
     fireEvent.click(screen.getByRole("tab", { name: /DES.*Demo/ }));
     expect(screen.getByLabelText("Nội dung đầu vào DES")).toHaveValue("DES draft");
     expect(screen.getByLabelText("Khóa DES")).toHaveValue("any key");
-    expect(screen.queryByLabelText("Nội dung kết quả DES")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Làm mới/ }));
+    expect(screen.getByLabelText("Nội dung kết quả DES")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /Đặt lại tất cả/ }));
     await waitFor(() =>
       expect(screen.getByRole("tab", { name: /Caesar/ })).toHaveAttribute("aria-selected", "true"),
     );

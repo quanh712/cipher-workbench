@@ -1,3 +1,4 @@
+import { getHistoryStorageWarning } from "../features/history/services/browserHistory";
 import { ServerWaitStatus } from "../shared/components/ServerWaitStatus";
 import { DiffieHellmanWorkspace } from "../features/diffieHellman/components/DiffieHellmanWorkspace";
 import { useDiffieHellman } from "../features/diffieHellman/hooks/useDiffieHellman";
@@ -9,7 +10,7 @@ import { rsaApi } from "../features/rsa/services/rsaApi";
 import { RsaWorkspace } from "../features/rsa/components/RsaWorkspace";
 import { useRsaCipher } from "../features/rsa/hooks/useRsaCipher";
 import { createDesDemoGateway } from "../features/des/demo/createDesDemoGateway";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AffineWorkspace } from "../features/affine/components/AffineWorkspace";
 import { useAffineCipher } from "../features/affine/hooks/useAffineCipher";
 import { affineApi } from "../features/affine/services/affineApi";
@@ -44,6 +45,12 @@ const desGateway =
 export function App({
   diffieHellmanGateway = null,
 }: { diffieHellmanGateway?: DiffieHellmanGateway | null } = {}) {
+  const [storageWarning, setStorageWarning] = useState(getHistoryStorageWarning);
+  useEffect(() => {
+    const update = () => setStorageWarning(getHistoryStorageWarning());
+    window.addEventListener("browser-history-change", update);
+    return () => window.removeEventListener("browser-history-change", update);
+  }, []);
   const cipher = useCaesarCipher();
   const vigenere = useVigenereCipher();
   const playfair = usePlayfairCipher();
@@ -60,6 +67,19 @@ export function App({
     algorithm === "diffie-hellman" && !showHistory,
   );
   const hillOpened = useRef(false);
+  const [opened, setOpened] = useState<CipherAlgorithm[]>(["caesar"]);
+  const [resetVersion, setResetVersion] = useState(0);
+  const [reuseVersion, setReuseVersion] = useState(0);
+  const [hasWork, setHasWork] = useState(false);
+  useEffect(() => {
+    if (!hasWork) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [hasWork]);
   const cipherAlgorithms = getCipherAlgorithms();
   const historyAvailable = true;
   const isLoading =
@@ -72,6 +92,16 @@ export function App({
     des.isBusy;
 
   function resetWorkspace() {
+    if (
+      hasWork &&
+      !window.confirm(
+        "Đặt lại tất cả bài đang làm? Đầu vào, khóa và kết quả trong phiên sẽ bị xóa.",
+      )
+    )
+      return;
+    setHasWork(false);
+    setOpened(["caesar"]);
+    setResetVersion((n) => n + 1);
     setVerification(undefined);
     setShowHistory(false);
     setAlgorithm("caesar");
@@ -90,16 +120,9 @@ export function App({
   function changeAlgorithm(nextAlgorithm: CipherAlgorithm) {
     if (isLoading || nextAlgorithm === algorithm) return;
     setVerification(undefined);
-    cipher.clearResult();
-    cipher.setNotice(null);
-    vigenere.clearResult();
-    playfair.clearResult();
-    affine.clearResult();
-    affine.setNotice(null);
-    columnar.clearResult();
-    hill.clearResult();
-    des.clearResult();
-    diffieHellman.clearResults();
+    setOpened((current) =>
+      current.includes(nextAlgorithm) ? current : [...current, nextAlgorithm],
+    );
     if (nextAlgorithm === "hill" && !hillOpened.current) {
       const drafts = { caesar: cipher, vigenere, playfair, affine, columnar, des };
       const current =
@@ -120,7 +143,7 @@ export function App({
     columnar: <ColumnarWorkspace cipher={columnar} />,
     hill: <HillWorkspace cipher={hill} />,
     des: <DesWorkspace cipher={des} />,
-    rsa: <RsaWorkspace cipher={rsa} verification={verification} />,
+    rsa: <RsaWorkspace key={reuseVersion} cipher={rsa} verification={verification} />,
     "diffie-hellman": <DiffieHellmanWorkspace cipher={diffieHellman} />,
   };
 
@@ -128,7 +151,19 @@ export function App({
     <>
       <WorkbenchBackground />
       <AppHeader disabled={isLoading} onReset={resetWorkspace} />
-      <main className="page">
+      <main
+        className="page"
+        onInputCapture={() => setHasWork(true)}
+        onChangeCapture={() => setHasWork(true)}
+        onClickCapture={(event) => {
+          const button = (event.target as HTMLElement).closest("button");
+          if (
+            button &&
+            /Tạo ví dụ|Mã hóa|Giải mã|Sinh|Ký|Trao đổi|Tính khóa/.test(button.textContent ?? "")
+          )
+            setHasWork(true);
+        }}
+      >
         <header className="hero">
           <WorkbenchBackground variant="hex" />
           <div className="hero__title">
@@ -147,6 +182,9 @@ export function App({
         </header>
         <div className="workspace">
           <ServerWaitStatus />
+          {storageWarning && (
+            <p role="alert">{storageWarning} Hãy sao chép hoặc tải kết quả để giữ lại.</p>
+          )}
           {historyAvailable && (
             <div className="view-switch" role="group" aria-label="Khu vực làm việc">
               <button
@@ -170,7 +208,7 @@ export function App({
               </button>
             </div>
           )}
-          {showHistory && historyAvailable ? (
+          {showHistory && historyAvailable && (
             <HistoryWorkspace
               onReuse={(draft) => {
                 rsa.setKeySource("manual");
@@ -178,30 +216,37 @@ export function App({
                 rsa.setManualKey("e", draft.e);
                 rsa.setManualKey("d", "");
                 setVerification(draft);
+                setReuseVersion((n) => n + 1);
+                setOpened((current) => (current.includes("rsa") ? current : [...current, "rsa"]));
                 setAlgorithm("rsa");
                 setShowHistory(false);
               }}
             />
-          ) : (
-            <>
-              <CipherAlgorithmSelector
-                value={algorithm}
-                disabled={isLoading}
-                onChange={changeAlgorithm}
-              />
-              {cipherAlgorithms.map(({ value: panelAlgorithm }) => (
+          )}
+          <div hidden={showHistory}>
+            <CipherAlgorithmSelector
+              value={algorithm}
+              disabled={isLoading}
+              onChange={changeAlgorithm}
+            />
+            {[...cipherAlgorithms]
+              .sort((a, b) => Number(b.value === algorithm) - Number(a.value === algorithm))
+              .map(({ value: panelAlgorithm }) => (
                 <div
                   id={`algorithm-panel-${panelAlgorithm}`}
-                  key={panelAlgorithm}
+                  key={`${panelAlgorithm}-${resetVersion}`}
                   role="tabpanel"
                   aria-labelledby={`algorithm-tab-${panelAlgorithm}`}
                   hidden={algorithm !== panelAlgorithm}
                 >
-                  {algorithm === panelAlgorithm ? workspaces[panelAlgorithm] : null}
+                  {algorithm === panelAlgorithm ||
+                  (["rsa", "diffie-hellman"].includes(panelAlgorithm) &&
+                    opened.includes(panelAlgorithm))
+                    ? workspaces[panelAlgorithm]
+                    : null}
                 </div>
               ))}
-            </>
-          )}
+          </div>
         </div>
       </main>
     </>

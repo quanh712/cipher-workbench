@@ -36,6 +36,19 @@ export function CipherAlgorithmSelector({
       <div className="section-label" id="algorithm-title">
         Thuật toán
       </div>
+      <select
+        className="algorithm-select-mobile"
+        aria-label="Chọn thuật toán"
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value as CipherAlgorithm)}
+      >
+        {cipherAlgorithms.map((algorithm) => (
+          <option key={algorithm.value} value={algorithm.value}>
+            {algorithm.name}
+          </option>
+        ))}
+      </select>
       <div className="algorithm-selector" role="tablist" aria-label="Thuật toán mật mã">
         {cipherAlgorithms.map((algorithm, index) => (
           <button

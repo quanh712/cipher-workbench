@@ -65,7 +65,15 @@ export function useDiffieHellman(gateway: DiffieHellmanGateway | null, active: b
   // Reset view state when its owning context changes, without a cascading effect update.
   if (context.active !== active || context.gateway !== gateway) {
     setContext({ active, gateway });
-    setOperation(idleState());
+    setOperation(
+      context.gateway !== gateway
+        ? idleState()
+        : {
+            ...operation,
+            supplementalBusy: false,
+            status: operation.status === "loading" ? "idle" : operation.status,
+          },
+    );
   }
 
   const invalidate = useCallback(() => {

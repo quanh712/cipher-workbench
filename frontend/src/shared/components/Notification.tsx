@@ -8,6 +8,7 @@ interface NotificationProps {
 
 export function Notification({ notice, onClose }: NotificationProps) {
   useEffect(() => {
+    if (notice.kind === "error") return;
     const timeoutId = window.setTimeout(onClose, 2500);
     return () => window.clearTimeout(timeoutId);
   }, [notice, onClose]);

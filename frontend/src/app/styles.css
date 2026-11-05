@@ -2139,3 +2139,18 @@ textarea,
     min-width: 0;
   }
 }
+
+.algorithm-select-mobile {
+  display: none;
+}
+@media (max-width: 520px) {
+  .algorithm-section .algorithm-selector {
+    display: none;
+  }
+  .algorithm-select-mobile {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    font: inherit;
+  }
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { pendingApiRequests } from "../services/browserHistoryFetch";
+import { pendingApiRequests, cancelPendingApiRequests } from "../services/browserHistoryFetch";
 
 export function ServerWaitStatus() {
   const [waiting, setWaiting] = useState(false);
@@ -21,7 +21,10 @@ export function ServerWaitStatus() {
   }, []);
   return waiting ? (
     <p role="status">
-      Máy chủ đang xử lý hoặc khởi động lại. Lần đầu có thể mất khoảng một phút; vui lòng chờ.
+      Máy chủ đang xử lý hoặc khởi động lại. Lần đầu có thể mất khoảng một phút.
+      <button type="button" onClick={cancelPendingApiRequests}>
+        Dừng chờ
+      </button>
     </p>
   ) : null;
 }

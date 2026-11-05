@@ -215,8 +215,6 @@ export function useAffineCipher(gateway: AffineGateway) {
       }
       setNotice({ kind: "success", message: "Đã tải kết quả." });
     } catch (error) {
-      setResult(null);
-      setProcessingStatus("error");
       setNotice({ kind: "error", message: userFacingError(error) });
     } finally {
       requestInFlight.current = false;

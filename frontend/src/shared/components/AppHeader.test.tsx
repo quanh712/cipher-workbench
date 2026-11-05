@@ -68,7 +68,7 @@ describe("AppHeader theme toggle", () => {
     systemTheme.change(false);
     expect(document.documentElement).toHaveAttribute("data-theme", "dark");
 
-    await user.click(screen.getByRole("button", { name: "Làm mới" }));
+    await user.click(screen.getByRole("button", { name: "Đặt lại tất cả" }));
     expect(onReset).toHaveBeenCalledOnce();
     expect(document.documentElement).toHaveAttribute("data-theme", "dark");
   });

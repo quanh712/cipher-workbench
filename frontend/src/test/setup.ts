@@ -6,6 +6,10 @@ import { transformAffineForAnalysis } from "../features/affine/utils/analysis";
 import { normalizeAffineKey } from "../features/affine/utils/validation";
 import { buildPlayfairMatrix, preparePlayfairDigraphs } from "../features/playfair/utils/analysis";
 
+beforeEach(() => {
+  vi.spyOn(window, "confirm").mockReturnValue(true);
+});
+
 afterEach(() => {
   cleanup();
   window.localStorage.removeItem("cipher-workbench-theme");

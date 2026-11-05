@@ -20,8 +20,23 @@ async function recordedFetch(
   context?: HistoryContext,
 ): Promise<Response> {
   const started = Date.now();
-  let response = await fetch(url, init);
-  init.signal?.throwIfAborted();
+  let failure: unknown;
+  let response: Response;
+  let responseBytes: number | null = null;
+  try {
+    response = await abortable(fetch(url, init), init.signal);
+    const bytes = await abortable(response.arrayBuffer(), init.signal);
+    responseBytes = bytes.byteLength;
+    response = new Response([204, 205, 304].includes(response.status) ? null : bytes, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
+    init.signal?.throwIfAborted();
+  } catch (error) {
+    failure = error;
+    response = new Response(null, { status: 503 });
+  }
   const [, algorithm, endpoint] = /^\/api\/([^/]+)\/([^/?]+)/.exec(url) ?? [];
   const recognized = [
     "caesar",
@@ -34,7 +49,10 @@ async function recordedFetch(
     "rsa",
     "dh",
   ];
-  if (!recognized.includes(algorithm)) return response;
+  if (!recognized.includes(algorithm)) {
+    if (failure) throw failure;
+    return response;
+  }
   let request: Record<string, unknown> = {};
   const form = init.body instanceof FormData ? init.body : null;
   if (typeof init.body === "string") {
@@ -72,24 +90,27 @@ async function recordedFetch(
       "derive_shared_secret",
       "exchange",
     ].includes(String(operation))
-  )
-    return response;
-  let body: Record<string, unknown> = {};
-  if (
-    algorithm === "rsa" &&
-    (operation === "sign" || operation === "verify") &&
-    response.headers.get("content-type")?.includes("application/json")
   ) {
+    if (failure) throw failure;
+    return response;
+  }
+  let body: Record<string, unknown> = {};
+  if (response.headers.get("content-type")?.includes("application/json")) {
     try {
-      const text = await response.text();
+      const text = await abortable(response.text(), init.signal);
       response = new Response(text, {
         status: response.status,
         statusText: response.statusText,
         headers: response.headers,
       });
-      body = object(JSON.parse(text));
-    } catch {
-      /* malformed response is recorded as failed */
+      try {
+        body = object(JSON.parse(text));
+      } catch {
+        body = { success: false };
+      }
+    } catch (error) {
+      failure = error;
+      /* malformed or interrupted response is recorded as failed */
     }
   }
   const result = object(body.result);
@@ -108,9 +129,16 @@ async function recordedFetch(
         : typeof request.text === "string"
           ? request.text.length
           : null),
-    outputLength: typeof body.result === "string" ? body.result.length : null,
-    httpStatus: response.status,
-    succeeded: response.ok && body.success !== false,
+    outputLength:
+      typeof body.result === "string"
+        ? context?.source === "file" || form
+          ? new TextEncoder().encode(body.result).byteLength
+          : body.result.length
+        : form?.get("response_mode") === "file"
+          ? responseBytes
+          : null,
+    httpStatus: failure ? 0 : response.status,
+    succeeded: !failure && response.ok && body.success !== false,
     durationMs: Math.max(0, Date.now() - started),
   } as BrowserHistoryRow;
   if (algorithm === "rsa" && (operation === "sign" || operation === "verify")) {
@@ -131,9 +159,35 @@ async function recordedFetch(
     });
   }
   appendBrowserHistory(row);
+  if (failure) throw failure;
   return response;
 }
 
+// Bound both transport and response-body waits; stale promises cannot update callers.
+export const API_TIMEOUT_MS = 120_000;
+function abortable<T>(promise: Promise<T>, signal?: AbortSignal | null): Promise<T> {
+  if (!signal) return promise;
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => {
+      signal.removeEventListener("abort", abort);
+      reject(signal.reason ?? new Error("Đã dừng chờ yêu cầu."));
+    };
+    if (signal.aborted) {
+      void promise.catch(() => {});
+      abort();
+      return;
+    }
+    signal.addEventListener("abort", abort, { once: true });
+    promise.then(resolve, reject).finally(() => signal.removeEventListener("abort", abort));
+  });
+}
+const requests = new Set<AbortController>();
+export function cancelPendingApiRequests() {
+  for (const controller of requests)
+    controller.abort(
+      new Error("Đã dừng chờ. Bạn có thể thử lại; máy chủ có thể vẫn đang xử lý yêu cầu trước."),
+    );
+}
 let pending = 0;
 export function pendingApiRequests() {
   return pending;
@@ -143,14 +197,26 @@ export async function browserHistoryFetch(
   init: RequestInit = {},
   context?: HistoryContext,
 ): Promise<Response> {
+  const controller = new AbortController();
+  const forwardAbort = () => controller.abort(init.signal?.reason);
+  if (init.signal?.aborted) forwardAbort();
+  else init.signal?.addEventListener("abort", forwardAbort, { once: true });
+  const timer = setTimeout(
+    () => controller.abort(new Error("Máy chủ phản hồi quá lâu. Vui lòng thử lại.")),
+    API_TIMEOUT_MS,
+  );
+  requests.add(controller);
   pending++;
   window.dispatchEvent(new Event("api-pending-change"));
   try {
-    return await recordedFetch(url, init, context);
+    return await recordedFetch(url, { ...init, signal: controller.signal }, context);
   } catch (error) {
-    if (init.signal?.aborted) throw error;
+    if (controller.signal.aborted) throw controller.signal.reason;
     throw new Error("Không kết nối được máy chủ. Vui lòng thử lại sau ít phút.", { cause: error });
   } finally {
+    clearTimeout(timer);
+    init.signal?.removeEventListener("abort", forwardAbort);
+    requests.delete(controller);
     pending--;
     window.dispatchEvent(new Event("api-pending-change"));
   }

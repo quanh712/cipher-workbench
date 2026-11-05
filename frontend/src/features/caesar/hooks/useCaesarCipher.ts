@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { CaesarApiError, caesarApi } from "../services/caesarApi";
+import { caesarApi } from "../services/caesarApi";
 import type {
   CipherMode,
   CipherResultSnapshot,
@@ -13,7 +13,7 @@ import { saveBlob } from "../../../shared/utils/download";
 import { MAX_TEXT_FILE_BYTES, readTextFile } from "../../../shared/utils/textFileValidation";
 
 function userFacingError(error: unknown) {
-  return error instanceof CaesarApiError
+  return error instanceof Error
     ? error.message
     : "Không thể kết nối tới máy chủ. Vui lòng thử lại.";
 }
@@ -146,8 +146,6 @@ export function useCaesarCipher() {
       }
       setNotice({ kind: "success", message: "Đã tải kết quả." });
     } catch (error) {
-      setResult(null);
-      setProcessingStatus("error");
       setNotice({ kind: "error", message: userFacingError(error) });
     } finally {
       requestInFlight.current = false;

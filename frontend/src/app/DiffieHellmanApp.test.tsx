@@ -83,7 +83,7 @@ describe("Diffie–Hellman app registration", () => {
     ]) {
       expect(screen.getByRole("textbox", { name: label })).toHaveValue(value);
     }
-    fireEvent.click(screen.getByRole("button", { name: "Làm mới" }));
+    fireEvent.click(screen.getByRole("button", { name: "Đặt lại tất cả" }));
     expect(screen.getByRole("tab", { name: /Caesar/ })).toHaveAttribute("aria-selected", "true");
     openDh();
     for (const [label, value] of [
@@ -98,7 +98,7 @@ describe("Diffie–Hellman app registration", () => {
     expect(gateway.generatePrivateValues).not.toHaveBeenCalled();
   });
 
-  it("clears successful results and open traces when changing cipher", async () => {
+  it("preserves successful results and open traces when changing cipher", async () => {
     vi.stubEnv("VITE_ENABLE_DIFFIE_HELLMAN", "true");
     const gateway = createDiffieHellmanGateway();
     render(<App diffieHellmanGateway={gateway} />);
@@ -108,16 +108,9 @@ describe("Diffie–Hellman app registration", () => {
     await userEvent.click(screen.getByText("Trace Y_A · 3 bước"));
     fireEvent.click(screen.getByRole("tab", { name: /Caesar/ }));
     openDh();
-    expect(
-      screen.queryByRole("region", { name: "Phân tích Diffie–Hellman" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("status", { name: "Trạng thái trao đổi DH" }),
-    ).not.toBeInTheDocument();
-    submit();
-    expect(await screen.findByText("Trace Y_A · 3 bước")).toBeVisible();
-    expect(screen.getByText("Trace Y_A · 3 bước").closest("details")).not.toHaveAttribute("open");
-    expect(gateway.exchange).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("region", { name: "Phân tích Diffie–Hellman" })).toBeVisible();
+    expect(screen.getByText("Trace Y_A · 3 bước").closest("details")).toHaveAttribute("open");
+    expect(gateway.exchange).toHaveBeenCalledTimes(1);
   });
 
   it.each(["cipher", "header"])(
@@ -135,7 +128,7 @@ describe("Diffie–Hellman app registration", () => {
       const target =
         action === "cipher"
           ? screen.getByRole("tab", { name: /Caesar/ })
-          : screen.getByRole("button", { name: "Làm mới" });
+          : screen.getByRole("button", { name: "Đặt lại tất cả" });
       expect(target).toBeEnabled();
       fireEvent.click(target);
       expect(gateway.exchange.mock.calls[0][1].aborted).toBe(true);

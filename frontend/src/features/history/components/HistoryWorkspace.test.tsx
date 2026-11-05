@@ -56,3 +56,13 @@ it("removes stale rows while the history screen remains open", async () => {
   });
   expect(screen.queryByText("Thành công")).not.toBeInTheDocument();
 });
+
+it("keeps history when bulk deletion is canceled", async () => {
+  appendBrowserHistory({ ...row, createdAt: new Date().toISOString() });
+  vi.mocked(window.confirm).mockReturnValue(false);
+  render(<HistoryWorkspace />);
+  await screen.findByText("Thành công");
+  await userEvent.click(screen.getByRole("button", { name: "Xóa toàn bộ lịch sử" }));
+  expect(screen.getByText("Thành công")).toBeVisible();
+  expect(localStorage.getItem(HISTORY_KEY)).toContain('"id":1');
+});

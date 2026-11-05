@@ -30,6 +30,7 @@ function write(rows: BrowserHistoryRow[]) {
   } catch {
     storageWarning =
       "Trình duyệt không cho lưu lịch sử hoặc bộ nhớ đã đầy. Kết quả hiện tại vẫn dùng được.";
+    window.dispatchEvent(new Event("browser-history-change"));
     return false;
   }
 }

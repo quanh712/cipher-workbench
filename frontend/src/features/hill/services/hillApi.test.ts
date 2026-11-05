@@ -34,6 +34,7 @@ describe("Hill API adapter", () => {
     expect(response.result).toBe("DPLE");
     expect(response.blocks[0].output).toEqual([3, 15]);
     expect(vi.mocked(fetch)).toHaveBeenCalledWith("/api/hill/encrypt", {
+      signal: expect.any(AbortSignal),
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -44,7 +45,6 @@ describe("Hill API adapter", () => {
         ],
         options: { stripDiacritics: false, padChar: "X" },
       }),
-      signal: undefined,
     });
   });
 
@@ -115,7 +115,9 @@ describe("Hill API adapter", () => {
     };
     vi.mocked(fetch).mockResolvedValueOnce(json(body));
     await expect(hillApi.random(3)).resolves.toEqual(body);
-    expect(fetch).toHaveBeenCalledWith("/api/hill/key/random?m=3", { signal: undefined });
+    expect(fetch).toHaveBeenCalledWith("/api/hill/key/random?m=3", {
+      signal: expect.any(AbortSignal),
+    });
   });
 
   it("does not count an ASCII base inside a retained NFD Vietnamese cluster", async () => {

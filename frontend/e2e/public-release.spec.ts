@@ -73,6 +73,7 @@ test("file preview and download work while history retains no original contents"
   await page.reload();
   await page.getByRole("button", { name: "Lịch sử thao tác", exact: true }).click();
   await expect(page.getByRole("list", { name: "Các thao tác gần đây" })).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Xóa toàn bộ lịch sử", exact: true }).click();
   await expect(page.getByText("Chưa có thao tác nào khớp bộ lọc.")).toBeVisible();
 });
@@ -170,4 +171,26 @@ test("Diffie–Hellman exchange works and stores only operation metadata", async
   await page.setViewportSize({ width: 375, height: 812 });
   await expect(page.getByRole("heading", { name: "Lịch sử thao tác", exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("keeps RSA keys through history and offers a compact mobile selector", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("tab", { name: /RSA.*Khả dụng/ }).click();
+  await page.getByRole("button", { name: "Tạo ví dụ", exact: true }).click();
+  await page.getByRole("button", { name: "Tạo khóa", exact: true }).click();
+  await expect(page.getByText("{7, 187}", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Lịch sử thao tác", exact: true }).click();
+  await page.getByRole("button", { name: "Công cụ", exact: true }).click();
+  await expect(page.getByText("{7, 187}", { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("combobox", { name: "Chọn thuật toán" })).toBeVisible();
+  await expect(page.getByRole("tablist", { name: "Thuật toán mật mã" })).toBeHidden();
+  await page.getByRole("combobox", { name: "Chọn thuật toán" }).selectOption("caesar");
+  await page.getByRole("button", { name: "Tạo ví dụ", exact: true }).click();
+  await page.getByRole("button", { name: "Mã hóa", exact: true }).click();
+  await expect(page.locator("#algorithm-panel-caesar pre.output")).toHaveText("Khoor Zruog");
+  await page.getByRole("combobox", { name: "Chọn thuật toán" }).selectOption("rsa");
+  await expect(page.getByText("{7, 187}", { exact: true })).toBeVisible();
+  await page.getByRole("combobox", { name: "Chọn thuật toán" }).selectOption("caesar");
+  await expect(page.locator("#algorithm-panel-caesar pre.output")).toHaveText("Khoor Zruog");
 });

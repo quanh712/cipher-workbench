@@ -93,7 +93,6 @@ export function useRsaSignature(
       active: cipher.active,
       enabled,
       loading: false,
-      ...(!cipher.active ? { result: null, notice: null } : {}),
     });
   }
   // Invalidate dependent results before rendering shared-key edits.

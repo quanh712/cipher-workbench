@@ -75,6 +75,7 @@ export function HistoryWorkspace({
     const timer = window.setInterval(() => setClock(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
+  const [deleteMessage, setDeleteMessage] = useState("");
   const [retry, setRetry] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const controllers = useRef<AbortController[]>([]);
@@ -214,7 +215,8 @@ export function HistoryWorkspace({
           <p>
             Lịch sử thuộc hồ sơ trình duyệt này, lưu tối đa 1 giờ và có thể bị xóa sớm khi vượt hạn
             mức. Không lưu khóa bí mật hoặc nội dung file. Chọn lại file để thực hiện lại thao tác.
-            Diffie–Hellman chỉ lưu thông tin thao tác.
+            Nhật ký thông thường chỉ lưu thông tin thao tác, không khôi phục bản rõ hoặc bản mã. Hãy
+            sao chép hoặc tải kết quả trước khi đóng trang.
           </p>
         </div>
         <button
@@ -231,12 +233,18 @@ export function HistoryWorkspace({
         type="button"
         className="button button--secondary"
         onClick={() => {
-          deleteBrowserHistory();
-          setRetry((n) => n + 1);
+          if (!window.confirm("Xóa toàn bộ lịch sử trên trình duyệt này? Không thể hoàn tác."))
+            return;
+          if (deleteBrowserHistory()) {
+            setSelected(null);
+            setDeleteMessage("Đã xóa toàn bộ lịch sử.");
+            setRetry((n) => n + 1);
+          } else setDeleteMessage("Không thể xóa lịch sử. Vui lòng thử lại.");
         }}
       >
         Xóa toàn bộ lịch sử
       </button>
+      {deleteMessage && <p role="status">{deleteMessage}</p>}
       <div className="history__filters">
         <label>
           Thuật toán
@@ -314,7 +322,11 @@ export function HistoryWorkspace({
                 <span
                   className={`history__status ${item.succeeded ? "history__status--ok" : "history__status--error"}`}
                 >
-                  {item.succeeded ? "Thành công" : `Lỗi ${item.httpStatus}`}
+                  {item.succeeded
+                    ? "Thành công"
+                    : item.httpStatus === 0
+                      ? "Mất kết nối / đã dừng chờ"
+                      : `Lỗi ${item.httpStatus}`}
                 </span>
                 <strong>
                   {item.cipher === "diffie-hellman"

@@ -18,6 +18,7 @@ describe("Columnar API contract", () => {
       result: "A😀é𝄞",
     });
     expect(vi.mocked(fetch)).toHaveBeenCalledWith("/api/columnar/encrypt", {
+      signal: expect.any(AbortSignal),
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),

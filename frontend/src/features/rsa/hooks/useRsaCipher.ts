@@ -121,8 +121,12 @@ export function useRsaCipher(gateway: RsaGateway | null, active: boolean) {
   );
 
   useEffect(() => {
-    if (!active) clearResults();
-  }, [active, clearResults]);
+    if (!active) {
+      for (const task of ["key", "number", "text"] as const) {
+        if (controllers.current[task]) clearTask(task);
+      }
+    }
+  }, [active, clearTask]);
   useEffect(
     () => () => {
       for (const task of ["key", "number", "text"] as const) {
