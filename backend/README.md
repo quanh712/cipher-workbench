@@ -1,5 +1,17 @@
 # Backend Caesar, Vigenère, Playfair, Affine, Columnar, Hill, DES, RSA và Diffie–Hellman
 
+> Backend đang phát triển trong monorepo, cùng frontend tại `../frontend/`.
+> Xem [README chính](../README.md) cho setup và
+> [deploy public](../docs/DEPLOYMENT.md) cho phát hành. Root Docker chạy
+> `PUBLIC_MODE=true`, phục vụ UI và API cùng origin, không dùng database;
+> lịch sử ở trình duyệt hết hạn sau một giờ. Các mục SQLite, cookie và retention
+> bên dưới mô tả chế độ backend có database để phát triển/phục hồi, không phải
+> cấu hình public hiện tại. Khi chạy backend riêng cho frontend dev, dùng:
+>
+> ```sh
+> PUBLIC_MODE=true uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+> ```
+
 Backend FastAPI cung cấp API mã hóa/giải mã và trao đổi khóa cho chín thuật toán: năm hệ mã cổ điển
 **Caesar**, **Vigenère**, **Playfair**, **Affine**, **Columnar Transposition**, hệ mã
 khối cổ điển **Hill**, hệ mã khối **DES**, textbook **RSA**, và **Diffie–Hellman** phục vụ học tập.
@@ -40,8 +52,8 @@ JSON text hoặc multipart .txt
  JSON (hai trường; Hill/DES thêm warnings) hoặc attachment UTF-8
 ```
 
-Repo này chỉ có backend. UI do project FE riêng đảm nhiệm và tích hợp theo
-`repo_docs/frontend-integration.md`; app không phục vụ trang nào ở `/`.
+Thư mục này chứa backend; UI nằm tại `../frontend/`. Khi cấu hình `STATIC_DIR`,
+FastAPI phục vụ frontend đã build tại `/`, như trong Dockerfile gốc monorepo.
 
 ## 2. Thuật toán
 
@@ -854,12 +866,9 @@ docker compose exec app python -m app.history.retention
 # Deleted 0 expired history rows
 ```
 
-Container chạy trực tiếp Uvicorn; repository không cấu hình production reverse
-proxy, TLS, rate limiting, cloud deployment hoặc orchestration.
-
-Không phơi trực tiếp app này ra Internet. Nếu cần public service, hãy đặt một
-reverse proxy/gateway bên ngoài repository để kết thúc TLS, giới hạn request và
-thêm rate limiting; cấu hình và triển khai lớp đó nằm ngoài phạm vi dự án này.
+Compose trong thư mục backend là cấu hình SQLite riêng. Public deployment dùng
+Dockerfile và workflow tại gốc monorepo, với TLS do Render cung cấp; xem
+[hướng dẫn triển khai](../docs/DEPLOYMENT.md).
 
 ## 10. Kiến trúc và cấu trúc dự án
 
@@ -931,10 +940,9 @@ bytes, encoding, BOM và attachment; error handlers dùng một envelope thống
 
 ## 11. Phạm vi và ngoài phạm vi
 
-Repository này là backend cipher service cho tám cipher: Caesar, Vigenère, Playfair,
-Affine, Columnar Transposition, Hill, DES và RSA.
-UI thuộc project FE riêng, là consumer tách biệt tích hợp theo
-`repo_docs/frontend-integration.md`.
+Backend cung cấp chín thuật toán: Caesar, Vigenère, Playfair, Affine, Columnar
+Transposition, Hill, DES, RSA và Diffie–Hellman. UI nằm tại `../frontend/`, tích hợp
+qua API; các contract chi tiết nằm trong `repo_docs/`.
 
 Ngoài phạm vi hiện tại:
 
@@ -949,11 +957,11 @@ Ngoài phạm vi hiện tại:
   trùng mẫu (bản lọc `padding.filtered` có thể bỏ nhầm; `result` luôn là bản thô);
 - CORS wildcard/mọi origin; credentialed CORS chỉ hỗ trợ exact origin trong
   `CORS_ALLOW_ORIGINS`;
-- production reverse proxy, TLS, rate limiting, cloud deployment và CI/CD;
+- cấu hình gateway riêng ngoài public deployment của monorepo;
 - streaming file lớn hơn giới hạn nghiệp vụ.
 
-Dockerfile chỉ đóng gói app hiện có; nó không phải cấu hình production deployment
-hoàn chỉnh.
+Dockerfile trong thư mục backend đóng gói API riêng; Dockerfile gốc monorepo
+đóng gói public runtime gồm UI và API.
 
 ## 12. Nguồn đặc tả và thứ tự áp dụng
 
