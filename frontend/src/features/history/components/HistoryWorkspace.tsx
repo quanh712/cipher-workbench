@@ -2,6 +2,7 @@ import {
   deleteBrowserHistory,
   getHistoryStorageWarning,
   historyExpired,
+  readBrowserHistory,
 } from "../services/browserHistory";
 import { useEffect, useRef, useState } from "react";
 import { getCipherAlgorithms } from "../../../shared/config/cipherAlgorithms";
@@ -71,9 +72,20 @@ export function HistoryWorkspace({
     verify: emptyStream,
   });
   const [clock, setClock] = useState(Date.now());
+  const [hasHistory, setHasHistory] = useState(() => readBrowserHistory().length > 0);
   useEffect(() => {
-    const timer = window.setInterval(() => setClock(Date.now()), 1000);
-    return () => window.clearInterval(timer);
+    const updateHistory = () => setHasHistory(readBrowserHistory().length > 0);
+    const timer = window.setInterval(() => {
+      setClock(Date.now());
+      updateHistory();
+    }, 1000);
+    window.addEventListener("browser-history-change", updateHistory);
+    window.addEventListener("storage", updateHistory);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("browser-history-change", updateHistory);
+      window.removeEventListener("storage", updateHistory);
+    };
   }, []);
   const [deleteMessage, setDeleteMessage] = useState("");
   const [retry, setRetry] = useState(0);
@@ -219,6 +231,10 @@ export function HistoryWorkspace({
             sao chép hoặc tải kết quả trước khi đóng trang.
           </p>
         </div>
+      </div>
+
+      {getHistoryStorageWarning() && <p role="status">{getHistoryStorageWarning()}</p>}
+      <div className="history__actions">
         <button
           className="button button--secondary"
           type="button"
@@ -226,24 +242,23 @@ export function HistoryWorkspace({
         >
           Làm mới lịch sử
         </button>
+        <button
+          type="button"
+          className="button button--secondary"
+          disabled={!hasHistory}
+          onClick={() => {
+            if (!window.confirm("Xóa toàn bộ lịch sử trên trình duyệt này? Không thể hoàn tác."))
+              return;
+            if (deleteBrowserHistory()) {
+              setSelected(null);
+              setDeleteMessage("Đã xóa toàn bộ lịch sử.");
+              setRetry((n) => n + 1);
+            } else setDeleteMessage("Không thể xóa lịch sử. Vui lòng thử lại.");
+          }}
+        >
+          Xóa toàn bộ lịch sử
+        </button>
       </div>
-
-      {getHistoryStorageWarning() && <p role="status">{getHistoryStorageWarning()}</p>}
-      <button
-        type="button"
-        className="button button--secondary"
-        onClick={() => {
-          if (!window.confirm("Xóa toàn bộ lịch sử trên trình duyệt này? Không thể hoàn tác."))
-            return;
-          if (deleteBrowserHistory()) {
-            setSelected(null);
-            setDeleteMessage("Đã xóa toàn bộ lịch sử.");
-            setRetry((n) => n + 1);
-          } else setDeleteMessage("Không thể xóa lịch sử. Vui lòng thử lại.");
-        }}
-      >
-        Xóa toàn bộ lịch sử
-      </button>
       {deleteMessage && <p role="status">{deleteMessage}</p>}
       <div className="history__filters">
         <label>

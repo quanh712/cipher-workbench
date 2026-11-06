@@ -379,6 +379,16 @@ textarea,
   color: var(--muted);
   line-height: 1.5;
 }
+.history__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.history__actions .button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 .history__filters {
   display: flex;
   flex-wrap: wrap;
@@ -1748,6 +1758,9 @@ textarea,
   .history__heading {
     align-items: stretch;
     flex-direction: column;
+  }
+  .history__actions .button {
+    flex: 1 1 100%;
   }
   .history__filters label {
     flex: 1 1 100%;

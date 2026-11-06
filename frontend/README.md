@@ -1,5 +1,11 @@
 # Cipher Workbench Frontend
 
+> This is the active frontend inside the monorepo. Use the
+> [root README](../README.md) for setup and
+> [local runtime guide](../docs/LOCAL_MIGRATION.md) for Docker at port 18081.
+> The standalone SQLite/Nginx deployment instructions retained below describe
+> the legacy stack; normal deployment uses the monorepo root.
+
 Ứng dụng web phục vụ học tập và thực hành mật mã: mã hóa, giải mã, trao đổi khóa,
 ký số và xem các bước xử lý. Frontend dùng React, TypeScript và Vite, kết nối
 Backend thật qua API cùng origin.

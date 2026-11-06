@@ -31,7 +31,16 @@ it("shows local metadata and filters without any server request", async () => {
   expect(screen.getByText(/lưu tối đa 1 giờ/)).toBeVisible();
   await userEvent.selectOptions(screen.getByLabelText("Thuật toán"), "affine");
   expect(await screen.findByText("Chưa có thao tác nào khớp bộ lọc.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Xóa toàn bộ lịch sử" })).toBeEnabled();
   expect(fetch).not.toHaveBeenCalled();
+});
+it("disables bulk deletion when browser history is empty", async () => {
+  render(<HistoryWorkspace />);
+  await screen.findByText("Chưa có thao tác nào khớp bộ lọc.");
+  const button = screen.getByRole("button", { name: "Xóa toàn bộ lịch sử" });
+  expect(button).toBeDisabled();
+  await userEvent.click(button);
+  expect(window.confirm).not.toHaveBeenCalled();
 });
 it("clears browser history", async () => {
   appendBrowserHistory({ ...row, createdAt: new Date().toISOString() });
@@ -39,6 +48,7 @@ it("clears browser history", async () => {
   await screen.findByText("Thành công");
   await userEvent.click(screen.getByRole("button", { name: "Xóa toàn bộ lịch sử" }));
   expect(await screen.findByText("Chưa có thao tác nào khớp bộ lọc.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Xóa toàn bộ lịch sử" })).toBeDisabled();
 });
 it("removes stale rows while the history screen remains open", async () => {
   vi.useFakeTimers();
@@ -55,6 +65,7 @@ it("removes stale rows while the history screen remains open", async () => {
     await vi.advanceTimersByTimeAsync(2000);
   });
   expect(screen.queryByText("Thành công")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Xóa toàn bộ lịch sử" })).toBeDisabled();
 });
 
 it("keeps history when bulk deletion is canceled", async () => {

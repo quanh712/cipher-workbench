@@ -2,6 +2,10 @@
 
 Private monorepo for the React frontend, FastAPI backend, and manual release pipeline.
 
+This is the canonical workspace for new changes. The sibling `cipher-workbench-fe`
+and `cipher-workbench-be` repositories are retained for recovery only; edit
+`frontend/` and `backend/` here. See [local migration and recovery](docs/LOCAL_MIGRATION.md).
+
 ```text
 frontend/     React + TypeScript + Vite
 backend/      Python 3.12 + FastAPI
@@ -28,6 +32,7 @@ Frontend:
 ```sh
 cd frontend
 npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
@@ -40,6 +45,8 @@ PUBLIC_MODE=true uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 For frontend feature flags and the development API proxy, see [frontend configuration](frontend/.env.example). The release Docker image enables Hill, DES, RSA, and Diffie–Hellman.
+If using the Docker backend instead of the standalone backend, set
+`BACKEND_DEV_URL=http://127.0.0.1:18081` in `frontend/.env.local`.
 
 To run the complete public container:
 
@@ -47,7 +54,10 @@ To run the complete public container:
 docker compose up --build
 ```
 
-Then open http://localhost:8000.
+Then open http://127.0.0.1:18081. The local container runs the same public mode as
+production: no server database, with history kept in the browser for one hour.
+Use `APP_HTTP_PORT=18082 docker compose up --build -d --wait` to choose another
+port. Local and production browser histories are separate.
 
 ## Migration
 

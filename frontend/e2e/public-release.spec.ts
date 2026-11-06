@@ -15,7 +15,9 @@ test("public build serves UI and APIs without database, cookies, or API-to-SPA f
   });
   expect((await request.get("/api/unknown")).status()).toBe(404);
   expect((await request.get("/api/history")).status()).toBe(404);
+  expect((await request.get("/favicon.svg")).headers()["content-type"]).toContain("image/svg+xml");
   await page.goto("/");
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", "/favicon.svg");
   await expect(page.getByRole("button", { name: "Lịch sử thao tác", exact: true })).toBeVisible();
   for (const algorithm of ["hill", "des", "rsa", "diffie-hellman"]) {
     await expect(page.locator(`#algorithm-tab-${algorithm}`)).toBeEnabled();
@@ -76,6 +78,9 @@ test("file preview and download work while history retains no original contents"
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Xóa toàn bộ lịch sử", exact: true }).click();
   await expect(page.getByText("Chưa có thao tác nào khớp bộ lọc.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Xóa toàn bộ lịch sử", exact: true }),
+  ).toBeDisabled();
 });
 
 test("history expires after one hour while the history screen stays open", async ({ page }) => {
@@ -90,6 +95,9 @@ test("history expires after one hour while the history screen stays open", async
   );
   await page.clock.fastForward(3_601_000);
   await expect(page.getByText("Chưa có thao tác nào khớp bộ lọc.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Xóa toàn bộ lịch sử", exact: true }),
+  ).toBeDisabled();
 });
 
 test("Hill and DES complete real known-vector operations", async ({ page }) => {
