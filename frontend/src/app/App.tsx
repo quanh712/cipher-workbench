@@ -1,3 +1,4 @@
+import { WorkspaceErrorBoundary } from "../shared/components/WorkspaceErrorBoundary";
 import { PrivacyPolicy } from "../shared/components/PrivacyPolicy";
 import { getHistoryStorageWarning } from "../features/history/services/browserHistory";
 import { ServerWaitStatus } from "../shared/components/ServerWaitStatus";
@@ -217,21 +218,25 @@ export function App({
             </div>
           )}
           {showHistory && historyAvailable && (
-            <Suspense fallback={<p role="status">Đang tải lịch sử…</p>}>
-              <HistoryWorkspace
-                onReuse={(draft) => {
-                  rsa.setKeySource("manual");
-                  rsa.setManualKey("n", draft.n);
-                  rsa.setManualKey("e", draft.e);
-                  rsa.setManualKey("d", "");
-                  setVerification(draft);
-                  setReuseVersion((n) => n + 1);
-                  setOpened((current) => (current.includes("rsa") ? current : [...current, "rsa"]));
-                  setAlgorithm("rsa");
-                  setShowHistory(false);
-                }}
-              />
-            </Suspense>
+            <WorkspaceErrorBoundary>
+              <Suspense fallback={<p role="status">Đang tải lịch sử…</p>}>
+                <HistoryWorkspace
+                  onReuse={(draft) => {
+                    rsa.setKeySource("manual");
+                    rsa.setManualKey("n", draft.n);
+                    rsa.setManualKey("e", draft.e);
+                    rsa.setManualKey("d", "");
+                    setVerification(draft);
+                    setReuseVersion((n) => n + 1);
+                    setOpened((current) =>
+                      current.includes("rsa") ? current : [...current, "rsa"],
+                    );
+                    setAlgorithm("rsa");
+                    setShowHistory(false);
+                  }}
+                />
+              </Suspense>
+            </WorkspaceErrorBoundary>
           )}
           <div hidden={showHistory}>
             <CipherAlgorithmSelector
@@ -249,13 +254,15 @@ export function App({
                   aria-labelledby={`algorithm-tab-${panelAlgorithm}`}
                   hidden={algorithm !== panelAlgorithm}
                 >
-                  <Suspense fallback={<p role="status">Đang tải giao diện…</p>}>
-                    {algorithm === panelAlgorithm ||
-                    (["rsa", "diffie-hellman"].includes(panelAlgorithm) &&
-                      opened.includes(panelAlgorithm))
-                      ? workspaces[panelAlgorithm]
-                      : null}
-                  </Suspense>
+                  <WorkspaceErrorBoundary>
+                    <Suspense fallback={<p role="status">Đang tải giao diện…</p>}>
+                      {algorithm === panelAlgorithm ||
+                      (["rsa", "diffie-hellman"].includes(panelAlgorithm) &&
+                        opened.includes(panelAlgorithm))
+                        ? workspaces[panelAlgorithm]
+                        : null}
+                    </Suspense>
+                  </WorkspaceErrorBoundary>
                 </div>
               ))}
           </div>

@@ -716,11 +716,19 @@ export function RsaWorkspace({
           </div>
         </section>
       </div>
-      {tab === "pem" && cipher.active && (
-        <div id="rsa-panel-pem" role="tabpanel" aria-labelledby="rsa-tab-pem">
-          <RsaPemPanel ref={pemPanel} key={cipher.resetVersion} gateway={cipher.gateway} />
-        </div>
-      )}
+      <div
+        hidden={tab !== "pem" || !cipher.active}
+        id="rsa-panel-pem"
+        role="tabpanel"
+        aria-labelledby="rsa-tab-pem"
+      >
+        <RsaPemPanel
+          active={tab === "pem" && cipher.active}
+          ref={pemPanel}
+          key={cipher.resetVersion}
+          gateway={cipher.gateway}
+        />
+      </div>
       <div
         id="rsa-panel-signature"
         role="tabpanel"

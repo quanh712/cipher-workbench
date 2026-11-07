@@ -10,7 +10,11 @@ RSA giáo dục: n=pq, φ=(p-1)(q-1), d=e⁻¹ mod φ; c=m^e mod n, m=c^d mod n.
 
 ## 2. Phạm vi frontend
 
-UI có các tab Mã hóa / Chữ ký số / Chữ ký PEM. Nhánh học thuật hỗ trợ sinh khóa thủ công/ngẫu nhiên, mã hóa/giải mã số và văn bản char/block, upload file .txt để mã hóa, ký/kiểm raw-integer. Nhánh PEM có nút Tạo ví dụ sinh bộ mẫu RSA 2048 bit trong trình duyệt theo yêu cầu, điền thông điệp/khóa và chữ ký mẫu hợp lệ cho chế độ kiểm tra; không tự gửi thao tác ký/kiểm tra lên server. Nhánh PEM hỗ trợ ký/kiểm văn bản hoặc file .txt, dán khóa hoặc chọn file .pem/.key tối đa 64 KiB, mật khẩu private key nếu có, tải chữ ký/public key và chuyển kết quả ký sang kiểm tra. Khóa riêng và mật khẩu được gửi lên backend khi ký, xóa khỏi form sau thành công hoặc rời tab; không lưu trong browser history. Thay input/khóa phải vô hiệu kết quả cũ. Chữ ký không hợp lệ là kết quả kiểm tra, khác lỗi dịch vụ.
+UI có các tab Mã hóa / Giải mã, Chữ ký số nguyên và Chữ ký PEM. Nhánh học thuật hỗ trợ sinh khóa thủ công/ngẫu nhiên, mã hóa/giải mã số và văn bản char/block, upload file .txt để mã hóa, ký/kiểm raw-integer. Nhánh PEM có nút Tạo ví dụ sinh bộ mẫu RSA 2048 bit trong trình duyệt theo yêu cầu, điền thông điệp/khóa và chữ ký mẫu hợp lệ cho chế độ kiểm tra; không tự gửi thao tác ký/kiểm tra lên server. Nhánh PEM hỗ trợ ký/kiểm văn bản hoặc file .txt, dán khóa hoặc chọn file .pem/.key tối đa 64 KiB, mật khẩu private key nếu có, tải chữ ký/public key và chuyển kết quả ký sang kiểm tra. Khóa riêng và mật khẩu được gửi lên backend khi ký, xóa khỏi form sau thành công hoặc rời tab; không lưu trong browser history. Thay input/khóa phải vô hiệu kết quả cũ. Chữ ký không hợp lệ là kết quả kiểm tra, khác lỗi dịch vụ.
+
+Bản nháp PEM không bí mật (thông điệp, thao tác, public key, chữ ký/kết quả) được giữ trong bộ nhớ khi chuyển chức năng, thuật toán hoặc Công cụ/Lịch sử; tải lại trang hoặc Đặt lại sẽ xóa bản nháp. Rời PEM hủy request đang chạy và xóa private key/passphrase. Nhập file khóa thay thế thất bại xóa khóa đang dùng; cần chọn/dán lại trước khi ký hoặc kiểm tra.
+
+Lịch sử PEM chỉ lưu metadata thao tác; chi tiết không dựng các trường chữ ký/khóa/mã băm không được lưu. Kích thước bản ghi PEM mới là byte UTF-8; bản ghi text cũ chưa có đơn vị được ghi rõ UTF-16, không suy ra số byte khi nội dung không được lưu.
 
 Các trạng thái bắt buộc: chưa nhập, không hợp lệ, đang xử lý, thành công và lỗi.
 Chỉ hiển thị kết quả thực khi API hoàn tất; xử lý hủy/thay đổi dữ liệu theo lifecycle
@@ -31,7 +35,7 @@ POST /api/rsa/verify
 
 Crypto operands là chuỗi decimal, control bits/traceBlockIndex là JSON integer. Manual prime ≤10^12; toán hạng ≤2^128-1; random bits 16/32/64/128. Text ≤10000 code point, block cipher ≤40000 item. BE encrypt nhận JSON number/text, char/block và multipart file UTF-8 .txt ≤1000000 byte; không có /api/rsa/file. Decrypt block cần metadata byte length theo schema. Raw sign nhận m,d,e,n; verify m,signature,e,n. Standard sign/verify nhận text/file và PEM theo rsa_signature_schemas. Các nhánh có response model riêng, không ép về success/result chung.
 
-### Chữ ký chuẩn chỉ có ở backend
+### Chữ ký chuẩn PEM
 
 `POST /api/rsa/sign` nhận JSON `{source:"text",text,privateKeyPem,passphrase?}`
 hoặc multipart `file,privateKeyPem,passphrase?`. Verify dùng

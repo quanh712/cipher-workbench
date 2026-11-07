@@ -2080,3 +2080,13 @@ textarea,
     font: inherit;
   }
 }
+
+.workspace-error {
+  padding: 20px;
+}
+.workspace-error h2 {
+  margin: 0 0 16px;
+}
+.workspace-error p {
+  margin: 0 0 16px;
+}

@@ -19,6 +19,7 @@ Docker public bật cả bốn. Cờ demo DES tách riêng khỏi API thật.
 
 ## 2. Luồng frontend và dữ liệu file
 
+- Lỗi tải giao diện từng thuật toán/lịch sử có thông báo và nút tải lại trang, giữ điều hướng và bản nháp các công cụ khác; tải lại trang sẽ mất bản nháp trong bộ nhớ.
 - Chọn thuật toán, nhập văn bản/khóa hoặc file nếu feature hỗ trợ, chọn thao tác,
   kiểm tra lỗi, gửi API và hiển thị kết quả thành công. Điền ví dụ không tự submit.
 - Phân biệt neutral/invalid/busy/success/error; request thất bại không tạo kết quả

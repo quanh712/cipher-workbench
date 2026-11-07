@@ -10,9 +10,11 @@ export interface RsaPemPanelHandle {
 
 export function RsaPemPanel({
   gateway,
+  active = true,
   ref,
 }: {
   gateway: RsaGateway | null;
+  active?: boolean;
   ref?: Ref<RsaPemPanelHandle>;
 }) {
   const [operation, setOperation] = useState<"sign" | "verify">("sign");
@@ -30,6 +32,16 @@ export function RsaPemPanel({
   const [exampleLoaded, setExampleLoaded] = useState(false);
   const pending = useRef<AbortController | null>(null);
   const revision = useRef(0);
+  const [wasActive, setWasActive] = useState(active);
+  if (wasActive !== active) {
+    setWasActive(active);
+    if (!active) {
+      setBusy(false);
+      setPrivateKey("");
+      setPassphrase("");
+      setKeyFile(null);
+    }
+  }
   useEffect(
     () => () => {
       revision.current += 1;
@@ -37,6 +49,12 @@ export function RsaPemPanel({
     },
     [],
   );
+  useEffect(() => {
+    if (active) return;
+    revision.current += 1;
+    pending.current?.abort();
+    pending.current = null;
+  }, [active]);
   function invalidate() {
     revision.current += 1;
     pending.current?.abort();
@@ -78,6 +96,10 @@ export function RsaPemPanel({
     setKeyFile(null);
     const current = revision.current;
     const target = operation;
+    if (target === "sign") {
+      setPrivateKey("");
+      setPassphrase("");
+    } else setPublicKey("");
     try {
       if (!/\.(pem|key)$/i.test(file.name) || !file.size || file.size > 64 * 1024)
         throw new Error("Chọn file khóa .pem hoặc .key, không rỗng, tối đa 64 KiB.");
@@ -95,7 +117,7 @@ export function RsaPemPanel({
     }
   }
   async function submit() {
-    if (!gateway?.standardSignature || pending.current) return;
+    if (!active || !gateway?.standardSignature || pending.current) return;
     invalidate();
     const controller = new AbortController();
     pending.current = controller;
@@ -107,6 +129,8 @@ export function RsaPemPanel({
         throw new Error("Chọn file .txt UTF-8, không rỗng, tối đa 5 MiB.");
       if (source === "text" && (!text || new TextEncoder().encode(text).length > 5 * 1024 * 1024))
         throw new Error("Nhập văn bản không rỗng, tối đa 5 MiB UTF-8.");
+      if (operation === "sign" ? !privateKey.trim() : !publicKey.trim())
+        throw new Error("Chọn hoặc dán lại khóa PEM hợp lệ trước khi tiếp tục.");
       const fields =
         operation === "sign"
           ? { privateKeyPem: privateKey, ...(passphrase ? { passphrase } : {}) }

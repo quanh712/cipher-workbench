@@ -68,3 +68,37 @@ it("keeps the deadline active until a download body finishes", async () => {
   await rejection;
   expect(pendingApiRequests()).toBe(0);
 });
+
+it("records PEM UTF-8 bytes without retaining message, signature or keys", async () => {
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        success: true,
+        result: {
+          mode: "standard",
+          signature: "private-result",
+          publicKeyPem: "public-pem",
+          contentBytes: 14,
+        },
+      }),
+      { headers: { "Content-Type": "application/json" } },
+    ),
+  );
+  await browserHistoryFetch("/api/rsa/sign", {
+    method: "POST",
+    body: JSON.stringify({
+      source: "text",
+      text: "Tiếng Việt",
+      privateKeyPem: "private-pem",
+      passphrase: "secret-password",
+    }),
+  });
+  const row = readBrowserHistory()[0];
+  expect(row).toMatchObject({
+    inputLength: 14,
+    payload: { result: { mode: "standard", inputLengthUnit: "bytes" } },
+  });
+  expect(JSON.stringify(row)).not.toMatch(
+    /Tiếng Việt|private-result|public-pem|private-pem|secret-password/,
+  );
+});

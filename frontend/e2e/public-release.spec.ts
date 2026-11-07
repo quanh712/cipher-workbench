@@ -301,3 +301,71 @@ test("defers RSA code until selected and serves fingerprinted assets with immuta
   expect(fonts.slice(2)).toHaveLength(2);
   expect(fonts.slice(2).every((url) => String(url).endsWith(".woff2"))).toBe(true);
 });
+
+test("workspace download failure preserves navigation and other drafts", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Tạo ví dụ", exact: true }).click();
+  await page.route("**/assets/RsaWorkspace-*.js", (route) => route.abort("failed"));
+  await page.locator("#algorithm-tab-rsa").click();
+  await expect(page.getByRole("heading", { name: "Không thể mở giao diện này" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Tải lại trang", exact: true })).toBeVisible();
+  await page.locator("#algorithm-tab-caesar").click();
+  await expect(page.getByRole("textbox", { name: "Nội dung đầu vào", exact: true })).toHaveValue(
+    "Hello World",
+  );
+  await page.getByRole("button", { name: "Mã hóa", exact: true }).click();
+  await expect(page.locator("#algorithm-panel-caesar pre.output")).toHaveText("Khoor Zruog");
+  await page.unroute("**/assets/RsaWorkspace-*.js");
+  await page.locator("#algorithm-tab-rsa").click();
+  await page.getByRole("button", { name: "Tải lại trang", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Caesar", exact: true })).toBeVisible();
+  await page.locator("#algorithm-tab-rsa").click();
+  await expect(page.getByRole("heading", { name: "RSA từng bước", exact: true })).toBeVisible();
+});
+
+test("PEM keeps public drafts across views, rejects old keys and explains history", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.locator("#algorithm-tab-rsa").click();
+  await page.getByRole("tab", { name: "Chữ ký PEM", exact: true }).click();
+  await page.getByRole("button", { name: "Tạo ví dụ", exact: true }).click();
+  await expect(page.getByText(/Đã tạo bộ mẫu RSA 2048 bit/)).toBeVisible();
+  const message = page.getByLabel("Nội dung ký / kiểm tra", { exact: true });
+  await message.fill("Tiếng Việt");
+  await page.getByRole("button", { name: "Lịch sử thao tác", exact: true }).click();
+  await page.getByRole("button", { name: "Công cụ", exact: true }).click();
+  await expect(message).toHaveValue("Tiếng Việt");
+  await expect(page.getByLabel("Private key PEM", { exact: true })).toHaveValue("");
+  await page.getByRole("tab", { name: "Chữ ký số nguyên", exact: true }).click();
+  await page.getByRole("tab", { name: "Chữ ký PEM", exact: true }).click();
+  await expect(message).toHaveValue("Tiếng Việt");
+  await page.getByRole("button", { name: "Tạo ví dụ", exact: true }).click();
+  await expect(page.getByLabel("Private key PEM", { exact: true })).not.toHaveValue("");
+  await page.getByLabel("Chọn file private key PEM", { exact: true }).setInputFiles({
+    name: "wrong.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("wrong"),
+  });
+  await expect(page.getByLabel("Private key PEM", { exact: true })).toHaveValue("");
+  await page.getByRole("button", { name: "Ký PEM", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Chọn hoặc dán lại khóa PEM");
+  await page.getByRole("button", { name: "Tạo ví dụ", exact: true }).click();
+  await expect(page.getByLabel("Private key PEM", { exact: true })).not.toHaveValue("");
+  await message.fill("Tiếng Việt");
+  await page.getByRole("button", { name: "Ký PEM", exact: true }).click();
+  await expect(page.getByText("Ký PEM thành công.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Dùng để kiểm tra", exact: true }).click();
+  const signature = await page.getByLabel("Chữ ký base64", { exact: true }).inputValue();
+  await page.getByRole("button", { name: "Lịch sử thao tác", exact: true }).click();
+  await page.getByRole("button", { name: "Xem chi tiết", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("14 byte");
+  await expect(dialog).toContainText("Lịch sử PEM chỉ lưu thông tin thao tác");
+  await expect(dialog).not.toContainText("Không có dữ liệu");
+  await dialog.getByRole("button", { name: "Đóng", exact: true }).click();
+  await page.getByRole("button", { name: "Công cụ", exact: true }).click();
+  await expect(page.getByLabel("Chữ ký base64", { exact: true })).toHaveValue(signature);
+  await page.getByRole("button", { name: "Kiểm tra PEM", exact: true }).click();
+  await expect(page.getByText("Chữ ký hợp lệ.", { exact: true })).toBeVisible();
+});

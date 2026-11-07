@@ -116,3 +116,19 @@ it("keeps a completed verification without a verdict neutral", async () => {
   expect(screen.getByLabelText("Kết quả")).toHaveClass("history__outcome--neutral");
   expect(screen.queryByRole("heading", { name: "Chữ ký hợp lệ" })).not.toBeInTheDocument();
 });
+
+it.each([
+  { result: { mode: "standard", inputLengthUnit: "bytes" }, length: 14, label: "14 byte" },
+  { result: { mode: "standard" }, length: 10, label: "10 đơn vị UTF-16 (bản ghi cũ)" },
+])("explains metadata-only PEM history with $label", async ({ result, length, label }) => {
+  vi.mocked(getSignatureDetail).mockResolvedValue({
+    ...detail,
+    inputLength: length,
+    payload: { result },
+  });
+  render(<SignatureHistoryDialog id={1} onClose={vi.fn()} onDeleted={vi.fn()} />);
+  await screen.findByRole("heading", { name: "Chữ ký hợp lệ" });
+  expect(screen.getByLabelText("Dữ liệu chữ ký")).toHaveTextContent(label);
+  expect(screen.getByText(/Lịch sử PEM chỉ lưu thông tin thao tác/)).toBeVisible();
+  expect(screen.queryByText("Không có dữ liệu")).not.toBeInTheDocument();
+});

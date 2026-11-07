@@ -152,6 +152,15 @@ async function recordedFetch(
       payload.signature = decimal(result.signature);
       payload.result = { mode: "raw-integer", recoveredMessage: decimal(result.recoveredMessage) };
     }
+    if (result.mode !== "raw-integer") {
+      row.inputLength =
+        file instanceof File
+          ? file.size
+          : typeof request.text === "string"
+            ? new TextEncoder().encode(request.text).byteLength
+            : null;
+      payload.result = { mode: "standard", inputLengthUnit: "bytes" };
+    }
     Object.assign(row, {
       valid: typeof result.valid === "boolean" ? result.valid : null,
       processingState: row.succeeded ? "completed" : "failed",

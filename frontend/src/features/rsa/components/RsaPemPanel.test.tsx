@@ -119,3 +119,31 @@ describe("PEM workspace", () => {
     expect(screen.queryByText("Ký PEM thành công.")).toBeNull();
   });
 });
+
+it("keeps the message while clearing secrets and aborting when leaving PEM", async () => {
+  const { gateway, rerender } = setup();
+  gateway.standardSignature.mockImplementation(() => new Promise(() => {}));
+  fireEvent.change(screen.getByLabelText("Mật khẩu khóa (nếu có)"), {
+    target: { value: "secret" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Ký PEM" }));
+  const signal = gateway.standardSignature.mock.calls[0][2] as AbortSignal;
+  rerender(<RsaPemPanel gateway={gateway} active={false} />);
+  expect(signal.aborted).toBe(true);
+  rerender(<RsaPemPanel gateway={gateway} active />);
+  expect(screen.getByLabelText("Nội dung ký / kiểm tra")).toHaveValue("abc");
+  expect(screen.getByLabelText("Private key PEM")).toHaveValue("");
+  expect(screen.getByLabelText("Mật khẩu khóa (nếu có)")).toHaveValue("");
+});
+
+it("cannot sign using the previous key after a replacement file is rejected", async () => {
+  const { gateway } = setup();
+  fireEvent.change(screen.getByLabelText("Chọn file private key PEM"), {
+    target: { files: [new File(["wrong"], "wrong.txt")] },
+  });
+  expect(await screen.findByRole("alert")).toHaveTextContent(".pem");
+  expect(screen.getByLabelText("Private key PEM")).toHaveValue("");
+  fireEvent.click(screen.getByRole("button", { name: "Ký PEM" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Chọn hoặc dán lại khóa PEM");
+  expect(gateway.standardSignature).not.toHaveBeenCalled();
+});

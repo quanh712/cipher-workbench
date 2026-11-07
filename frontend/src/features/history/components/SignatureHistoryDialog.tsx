@@ -65,8 +65,17 @@ function SignatureDetails({ detail }: { detail: SignatureHistoryDetail }) {
                     : "Bản ghi chưa có kết luận về tính hợp lệ của chữ ký."}
         </p>
       </section>
+      {standard && (
+        <p>
+          Lịch sử PEM chỉ lưu thông tin thao tác, không giữ nội dung, chữ ký hoặc khóa PEM. Để kiểm
+          tra lại, mở RSA → Chữ ký PEM → Kiểm tra PEM và nhập lại nội dung, chữ ký cùng khóa công
+          khai đã lưu riêng.
+        </p>
+      )}
       <section className="history__detail-section" aria-labelledby="signature-message-title">
-        <h3 id="signature-message-title">Thông điệp và chữ ký</h3>
+        <h3 id="signature-message-title">
+          {standard ? "Thông tin nội dung" : "Thông điệp và chữ ký"}
+        </h3>
         <dl className="history__facts">
           {standard ? (
             <>
@@ -76,33 +85,39 @@ function SignatureDetails({ detail }: { detail: SignatureHistoryDetail }) {
                 value={
                   detail.inputLength === null
                     ? null
-                    : `${detail.inputLength.toLocaleString("vi-VN")} byte`
+                    : `${detail.inputLength.toLocaleString("vi-VN")} ${detail.source === "file" || result.inputLengthUnit === "bytes" ? "byte" : "đơn vị UTF-16 (bản ghi cũ)"}`
                 }
               />
-              <Fact label="Mã băm SHA-256" value={result.sha256} />
+              {typeof result.sha256 === "string" && (
+                <Fact label="Mã băm SHA-256" value={result.sha256} />
+              )}
             </>
           ) : (
             <Fact label="Thông điệp gốc m" value={input.m} />
           )}
-          <Fact label={standard ? "Chữ ký" : "Chữ ký s"} value={detail.payload.signature} />
+          {(!standard || typeof detail.payload.signature === "string") && (
+            <Fact label={standard ? "Chữ ký" : "Chữ ký s"} value={detail.payload.signature} />
+          )}
           {verifying && !standard && (
             <Fact label="Thông điệp khôi phục m′" value={result.recoveredMessage} />
           )}
         </dl>
       </section>
-      <section className="history__detail-section" aria-labelledby="signature-key-title">
-        <h3 id="signature-key-title">Khóa công khai</h3>
-        <dl className="history__facts">
-          {standard ? (
-            <Fact label="Khóa công khai PEM" value={detail.payload.public_key} />
-          ) : (
-            <>
-              <Fact label="Số mũ công khai e" value={key.e} />
-              <Fact label="Mô-đun n" value={key.n} />
-            </>
-          )}
-        </dl>
-      </section>
+      {(!standard || typeof detail.payload.public_key === "string") && (
+        <section className="history__detail-section" aria-labelledby="signature-key-title">
+          <h3 id="signature-key-title">Khóa công khai</h3>
+          <dl className="history__facts">
+            {standard ? (
+              <Fact label="Khóa công khai PEM" value={detail.payload.public_key} />
+            ) : (
+              <>
+                <Fact label="Số mũ công khai e" value={key.e} />
+                <Fact label="Mô-đun n" value={key.n} />
+              </>
+            )}
+          </dl>
+        </section>
+      )}
       <section className="history__detail-section" aria-labelledby="signature-operation-title">
         <h3 id="signature-operation-title">Thông tin thao tác</h3>
         <dl className="history__facts history__facts--metadata">
@@ -220,7 +235,7 @@ export function SignatureHistoryDialog({
       {detail && (
         <>
           <SignatureDetails detail={detail} />
-          {!draft && (
+          {!draft && fields(detail.payload.result).mode !== "standard" && (
             <p>
               Bản ghi này không hỗ trợ điền vào chế độ kiểm tra số nguyên. Với thao tác từ file, hãy
               chọn lại file; nội dung file không được lưu.
