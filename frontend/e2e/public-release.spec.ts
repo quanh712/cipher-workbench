@@ -124,7 +124,7 @@ test("RSA signature history survives reload and supports verification without th
 }) => {
   await page.goto("/");
   await page.getByRole("tab", { name: /RSA.*Khả dụng/ }).click();
-  await page.getByRole("tab", { name: "Chữ ký số", exact: true }).click();
+  await page.getByRole("tab", { name: "Chữ ký số nguyên", exact: true }).click();
   await page.getByRole("button", { name: "Tạo ví dụ", exact: true }).click();
   await page.getByRole("textbox", { name: "n · modulo", exact: true }).fill("3233");
   await page.getByRole("textbox", { name: "e · khóa công khai", exact: true }).fill("17");
@@ -241,4 +241,28 @@ test("privacy policy opens from footer and preserves work on desktop and mobile"
   page.on("dialog", (dialog) => dialog.accept());
   await page.goto("/#chinh-sach-bao-mat");
   await expect(page.getByRole("dialog", { name: "Chính sách bảo mật", exact: true })).toBeVisible();
+});
+
+test("PEM example signs text and verifies the same content from a TXT file", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("tab", { name: /RSA.*Khả dụng/ }).click();
+  await page.getByRole("tab", { name: "Chữ ký PEM", exact: true }).click();
+  await page.getByRole("button", { name: "Tạo ví dụ", exact: true }).click();
+  await expect(page.getByText(/Đã tạo bộ mẫu RSA 2048 bit/)).toBeVisible();
+  const message = await page.getByLabel("Nội dung ký / kiểm tra", { exact: true }).inputValue();
+  await page.getByRole("button", { name: "Ký PEM", exact: true }).click();
+  await expect(page.getByText("Ký PEM thành công.", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Private key PEM", { exact: true })).toHaveValue("");
+  await page.getByRole("button", { name: "Dùng để kiểm tra" }).click();
+  await page.getByLabel("Nguồn nội dung").selectOption("file");
+  await page
+    .getByLabel(/File ký/)
+    .setInputFiles({
+      name: "pem-example.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from(message),
+    });
+  await expect(page.getByText("pem-example.txt", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Kiểm tra PEM", exact: true }).click();
+  await expect(page.getByText("Chữ ký hợp lệ.", { exact: true })).toBeVisible();
 });
