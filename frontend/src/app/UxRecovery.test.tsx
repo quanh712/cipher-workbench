@@ -49,7 +49,7 @@ it("keeps errors readable until explicitly dismissed", async () => {
   expect(close).not.toHaveBeenCalled();
   expect(screen.getByText("Thử tải lại")).toBeVisible();
 });
-it("preserves results through algorithm/history navigation and honors reset cancellation", async () => {
+it("preserves results through navigation and resets immediately without confirmation", async () => {
   render(<App />);
   fireEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
   fireEvent.click(screen.getByRole("button", { name: "Mã hóa" }));
@@ -66,10 +66,12 @@ it("preserves results through algorithm/history navigation and honors reset canc
   expect(screen.getByRole("tabpanel", { name: "Văn bản" })).toBeVisible();
   vi.mocked(window.confirm).mockReturnValue(false);
   fireEvent.click(screen.getByRole("button", { name: "Đặt lại tất cả" }));
-  expect(screen.getByRole("tabpanel", { name: "Văn bản" })).toBeVisible();
+  expect(window.confirm).not.toHaveBeenCalled();
+  expect(screen.getByRole("textbox", { name: "Nội dung đầu vào" })).toHaveValue("");
+  expect(screen.queryByText("Khoor Zruog")).not.toBeInTheDocument();
   const unload = new Event("beforeunload", { cancelable: true });
   window.dispatchEvent(unload);
-  expect(unload.defaultPrevented).toBe(true);
+  expect(unload.defaultPrevented).toBe(false);
 });
 it("reports a history storage failure beside a successful result", async () => {
   render(<App />);

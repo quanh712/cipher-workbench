@@ -14,16 +14,25 @@ export function historyExpired(row: { createdAt: string }, now = Date.now()) {
   const time = Date.parse(row.createdAt);
   return !Number.isFinite(time) || time > now || now - time >= HISTORY_TTL;
 }
-function boundedRows(rows: BrowserHistoryRow[]) {
-  const bounded = rows.slice(0, MAX_ITEMS);
-  while (bounded.length && new TextEncoder().encode(JSON.stringify(bounded)).byteLength > MAX_BYTES)
-    bounded.pop();
-  return bounded;
+// Serialize each row once. Keep the newest prefix, including UTF-8 and array separators.
+function boundedHistory(rows: BrowserHistoryRow[]) {
+  const bounded: BrowserHistoryRow[] = [];
+  const encoded: string[] = [];
+  const encoder = new TextEncoder();
+  let bytes = 2; // []
+  for (const row of rows.slice(0, MAX_ITEMS)) {
+    const serialized = JSON.stringify(row);
+    const added = encoder.encode(serialized).byteLength + (bounded.length ? 1 : 0);
+    if (bytes + added > MAX_BYTES) break;
+    bytes += added;
+    bounded.push(row);
+    encoded.push(serialized);
+  }
+  return { rows: bounded, serialized: `[${encoded.join(",")}]` };
 }
 function write(rows: BrowserHistoryRow[]) {
   try {
-    const serialized = JSON.stringify(boundedRows(rows));
-    localStorage.setItem(HISTORY_KEY, serialized);
+    localStorage.setItem(HISTORY_KEY, boundedHistory(rows).serialized);
     storageWarning = "";
     window.dispatchEvent(new Event("browser-history-change"));
     return true;
@@ -39,7 +48,7 @@ export function readBrowserHistory(): BrowserHistoryRow[] {
     const raw = localStorage.getItem(HISTORY_KEY);
     const value: unknown = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(value)) return [];
-    const rows = boundedRows(
+    const { rows } = boundedHistory(
       value
         .filter(
           (row): row is BrowserHistoryRow =>

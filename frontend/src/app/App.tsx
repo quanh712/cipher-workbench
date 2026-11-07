@@ -1,40 +1,77 @@
 import { PrivacyPolicy } from "../shared/components/PrivacyPolicy";
 import { getHistoryStorageWarning } from "../features/history/services/browserHistory";
 import { ServerWaitStatus } from "../shared/components/ServerWaitStatus";
-import { DiffieHellmanWorkspace } from "../features/diffieHellman/components/DiffieHellmanWorkspace";
 import { useDiffieHellman } from "../features/diffieHellman/hooks/useDiffieHellman";
 import type { DiffieHellmanGateway } from "../features/diffieHellman/services/diffieHellmanGateway";
 import { desApi } from "../features/des/services/desApi";
-import { DesWorkspace } from "../features/des/components/DesWorkspace";
 import { useDesCipher } from "../features/des/hooks/useDesCipher";
 import { rsaApi } from "../features/rsa/services/rsaApi";
-import { RsaWorkspace } from "../features/rsa/components/RsaWorkspace";
 import { useRsaCipher } from "../features/rsa/hooks/useRsaCipher";
 import { createDesDemoGateway } from "../features/des/demo/createDesDemoGateway";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AffineWorkspace } from "../features/affine/components/AffineWorkspace";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAffineCipher } from "../features/affine/hooks/useAffineCipher";
 import { affineApi } from "../features/affine/services/affineApi";
 import { CaesarWorkspace } from "../features/caesar/components/CaesarWorkspace";
 import { useCaesarCipher } from "../features/caesar/hooks/useCaesarCipher";
-import { ColumnarWorkspace } from "../features/columnar/components/ColumnarWorkspace";
 import { useColumnarCipher } from "../features/columnar/hooks/useColumnarCipher";
 import { columnarApi } from "../features/columnar/services/columnarApi";
-import { HillWorkspace } from "../features/hill/components/HillWorkspace";
 import { useHillCipher } from "../features/hill/hooks/useHillCipher";
 import { hillApi } from "../features/hill/services/hillApi";
-import { PlayfairWorkspace } from "../features/playfair/components/PlayfairWorkspace";
 import { usePlayfairCipher } from "../features/playfair/hooks/usePlayfairCipher";
-import { VigenereWorkspace } from "../features/vigenere/components/VigenereWorkspace";
 import { useVigenereCipher } from "../features/vigenere/hooks/useVigenereCipher";
 import type { VerificationDraft } from "../features/history/services/signatureHistoryApi";
-import { HistoryWorkspace } from "../features/history/components/HistoryWorkspace";
 import { CipherAlgorithmSelector } from "../shared/components/CipherAlgorithmSelector";
 import { AppHeader } from "../shared/components/AppHeader";
 import { CipherMark } from "../shared/components/CipherMark";
 import { WorkbenchBackground } from "../shared/components/WorkbenchBackground";
 import { getCipherAlgorithms } from "../shared/config/cipherAlgorithms";
 import type { CipherAlgorithm } from "../shared/types/cipher";
+
+const DiffieHellmanWorkspace = lazy(() =>
+  import("../features/diffieHellman/components/DiffieHellmanWorkspace").then((module) => ({
+    default: module.DiffieHellmanWorkspace,
+  })),
+);
+const DesWorkspace = lazy(() =>
+  import("../features/des/components/DesWorkspace").then((module) => ({
+    default: module.DesWorkspace,
+  })),
+);
+const AffineWorkspace = lazy(() =>
+  import("../features/affine/components/AffineWorkspace").then((module) => ({
+    default: module.AffineWorkspace,
+  })),
+);
+const ColumnarWorkspace = lazy(() =>
+  import("../features/columnar/components/ColumnarWorkspace").then((module) => ({
+    default: module.ColumnarWorkspace,
+  })),
+);
+const HillWorkspace = lazy(() =>
+  import("../features/hill/components/HillWorkspace").then((module) => ({
+    default: module.HillWorkspace,
+  })),
+);
+const PlayfairWorkspace = lazy(() =>
+  import("../features/playfair/components/PlayfairWorkspace").then((module) => ({
+    default: module.PlayfairWorkspace,
+  })),
+);
+const VigenereWorkspace = lazy(() =>
+  import("../features/vigenere/components/VigenereWorkspace").then((module) => ({
+    default: module.VigenereWorkspace,
+  })),
+);
+const RsaWorkspace = lazy(() =>
+  import("../features/rsa/components/RsaWorkspace").then((module) => ({
+    default: module.RsaWorkspace,
+  })),
+);
+const HistoryWorkspace = lazy(() =>
+  import("../features/history/components/HistoryWorkspace").then((module) => ({
+    default: module.HistoryWorkspace,
+  })),
+);
 
 const desGateway =
   import.meta.env.VITE_ENABLE_DES === "true"
@@ -71,16 +108,6 @@ export function App({
   const [opened, setOpened] = useState<CipherAlgorithm[]>(["caesar"]);
   const [resetVersion, setResetVersion] = useState(0);
   const [reuseVersion, setReuseVersion] = useState(0);
-  const [hasWork, setHasWork] = useState(false);
-  useEffect(() => {
-    if (!hasWork) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [hasWork]);
   const cipherAlgorithms = getCipherAlgorithms();
   const historyAvailable = true;
   const isLoading =
@@ -93,14 +120,6 @@ export function App({
     des.isBusy;
 
   function resetWorkspace() {
-    if (
-      hasWork &&
-      !window.confirm(
-        "Đặt lại tất cả bài đang làm? Đầu vào, khóa và kết quả trong phiên sẽ bị xóa.",
-      )
-    )
-      return;
-    setHasWork(false);
     setOpened(["caesar"]);
     setResetVersion((n) => n + 1);
     setVerification(undefined);
@@ -152,19 +171,7 @@ export function App({
     <>
       <WorkbenchBackground />
       <AppHeader disabled={isLoading} onReset={resetWorkspace} />
-      <main
-        className="page"
-        onInputCapture={() => setHasWork(true)}
-        onChangeCapture={() => setHasWork(true)}
-        onClickCapture={(event) => {
-          const button = (event.target as HTMLElement).closest("button");
-          if (
-            button &&
-            /Tạo ví dụ|Mã hóa|Giải mã|Sinh|Ký|Trao đổi|Tính khóa/.test(button.textContent ?? "")
-          )
-            setHasWork(true);
-        }}
-      >
+      <main className="page">
         <header className="hero">
           <WorkbenchBackground variant="hex" />
           <div className="hero__title">
@@ -210,19 +217,21 @@ export function App({
             </div>
           )}
           {showHistory && historyAvailable && (
-            <HistoryWorkspace
-              onReuse={(draft) => {
-                rsa.setKeySource("manual");
-                rsa.setManualKey("n", draft.n);
-                rsa.setManualKey("e", draft.e);
-                rsa.setManualKey("d", "");
-                setVerification(draft);
-                setReuseVersion((n) => n + 1);
-                setOpened((current) => (current.includes("rsa") ? current : [...current, "rsa"]));
-                setAlgorithm("rsa");
-                setShowHistory(false);
-              }}
-            />
+            <Suspense fallback={<p role="status">Đang tải lịch sử…</p>}>
+              <HistoryWorkspace
+                onReuse={(draft) => {
+                  rsa.setKeySource("manual");
+                  rsa.setManualKey("n", draft.n);
+                  rsa.setManualKey("e", draft.e);
+                  rsa.setManualKey("d", "");
+                  setVerification(draft);
+                  setReuseVersion((n) => n + 1);
+                  setOpened((current) => (current.includes("rsa") ? current : [...current, "rsa"]));
+                  setAlgorithm("rsa");
+                  setShowHistory(false);
+                }}
+              />
+            </Suspense>
           )}
           <div hidden={showHistory}>
             <CipherAlgorithmSelector
@@ -240,11 +249,13 @@ export function App({
                   aria-labelledby={`algorithm-tab-${panelAlgorithm}`}
                   hidden={algorithm !== panelAlgorithm}
                 >
-                  {algorithm === panelAlgorithm ||
-                  (["rsa", "diffie-hellman"].includes(panelAlgorithm) &&
-                    opened.includes(panelAlgorithm))
-                    ? workspaces[panelAlgorithm]
-                    : null}
+                  <Suspense fallback={<p role="status">Đang tải giao diện…</p>}>
+                    {algorithm === panelAlgorithm ||
+                    (["rsa", "diffie-hellman"].includes(panelAlgorithm) &&
+                      opened.includes(panelAlgorithm))
+                      ? workspaces[panelAlgorithm]
+                      : null}
+                  </Suspense>
                 </div>
               ))}
           </div>

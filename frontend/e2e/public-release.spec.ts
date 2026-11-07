@@ -255,14 +255,49 @@ test("PEM example signs text and verifies the same content from a TXT file", asy
   await expect(page.getByLabel("Private key PEM", { exact: true })).toHaveValue("");
   await page.getByRole("button", { name: "Dùng để kiểm tra" }).click();
   await page.getByLabel("Nguồn nội dung").selectOption("file");
-  await page
-    .getByLabel(/File ký/)
-    .setInputFiles({
-      name: "pem-example.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from(message),
-    });
+  await page.getByLabel(/File ký/).setInputFiles({
+    name: "pem-example.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from(message),
+  });
   await expect(page.getByText("pem-example.txt", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Kiểm tra PEM", exact: true }).click();
   await expect(page.getByText("Chữ ký hợp lệ.", { exact: true })).toBeVisible();
+});
+
+test("defers RSA code until selected and serves fingerprinted assets with immutable caching", async ({
+  page,
+}) => {
+  const scripts: string[] = [];
+  page.on("request", (request) => {
+    if (request.resourceType() === "script") scripts.push(request.url());
+  });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Caesar", exact: true })).toBeVisible();
+  expect(scripts.some((url) => /RsaWorkspace-.*\.js/.test(url))).toBe(false);
+  const chunk = page.waitForResponse((response) =>
+    /\/assets\/RsaWorkspace-.*\.js$/.test(response.url()),
+  );
+  await page.getByRole("tab", { name: /RSA.*Khả dụng/ }).click();
+  const response = await chunk;
+  expect(response.headers()["cache-control"]).toBe("public, max-age=31536000, immutable");
+  await expect(page.getByRole("heading", { name: "RSA từng bước" })).toBeVisible();
+  await page.getByRole("tab", { name: /Caesar.*Khả dụng/ }).click();
+  await page.getByRole("tab", { name: /RSA.*Khả dụng/ }).click();
+  await expect(page.getByRole("heading", { name: "RSA từng bước" })).toBeVisible();
+  expect(scripts.filter((url) => /RsaWorkspace-.*\.js/.test(url))).toHaveLength(1);
+  const fonts = await page.evaluate(async () => {
+    await document.fonts.ready;
+    return [
+      document.fonts.check('500 16px "Barlow"', "Tiếng Việt"),
+      document.fonts.check('700 16px "Barlow Condensed"', "Tiếng Việt"),
+      ...performance
+        .getEntriesByType("resource")
+        .map((resource) => resource.name)
+        .filter((name) => name.includes("/fonts/")),
+    ];
+  });
+  expect(fonts.slice(0, 2)).toEqual([true, true]);
+  expect(fonts.slice(2)).toHaveLength(2);
+  expect(fonts.slice(2).every((url) => String(url).endsWith(".woff2"))).toBe(true);
 });

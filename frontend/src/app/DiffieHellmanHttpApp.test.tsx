@@ -27,10 +27,11 @@ function pendingHttp() {
   });
   return { promise, resolve };
 }
-function setup() {
+async function setup() {
   const fetch = vi.spyOn(globalThis, "fetch").mockReset();
   render(<App diffieHellmanGateway={diffieHellmanApi} />);
   openDh();
+  await screen.findByRole("button", { name: "Thiết lập bí mật chung" });
   return fetch;
 }
 function expectIdle() {
@@ -50,7 +51,7 @@ afterEach(() => {
 
 describe("App → Diffie–Hellman HTTP adapter", () => {
   it("does not auto-fetch; submits canonical DTO and renders Backend results and four traces", async () => {
-    const fetch = setup();
+    const fetch = await setup();
     expect(fetch).not.toHaveBeenCalled();
     example();
     expect(fetch).not.toHaveBeenCalled();
@@ -94,7 +95,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
   });
 
   it("blocks malformed input before HTTP and random sends only public parameters", async () => {
-    const fetch = setup();
+    const fetch = await setup();
     example();
     fireEvent.change(input("Số mũ riêng X_A"), { target: { value: "x" } });
     start("exchange");
@@ -114,7 +115,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
   });
 
   it("random clears an earlier exchange immediately and replaces both private values only after HTTP success", async () => {
-    const fetch = setup();
+    const fetch = await setup();
     example();
     fetch.mockResolvedValueOnce(json(exchangeBody()));
     start("exchange");
@@ -146,7 +147,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
   ] as const)(
     "maps %s HTTP error %s/%s to the accessible field and supports retry",
     async (task, code, field, label) => {
-      const fetch = setup();
+      const fetch = await setup();
       example();
       const message = "Lỗi Backend <b>giữ nguyên dạng text</b>";
       fetch.mockResolvedValueOnce(json({ success: false, code, message, field }, 422));
@@ -171,7 +172,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
   it.each(["schema", "network", "unknown-field"])(
     "shows %s errors without partial results or false field errors",
     async (kind) => {
-      const fetch = setup();
+      const fetch = await setup();
       example();
       if (kind === "network") fetch.mockRejectedValueOnce(new TypeError("private network detail"));
       else
@@ -208,8 +209,8 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
 
   for (const task of ["exchange", "random"] as const) {
     it(`${task} times out after 15 seconds, retries and ignores late HTTP success`, async () => {
+      const fetch = await setup();
       vi.useFakeTimers();
-      const fetch = setup();
       example();
       const old = pendingHttp();
       const next = pendingHttp();
@@ -248,7 +249,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
     it.each(["edit", "reset", "cipher", "header", "example"])(
       `${task}: %s aborts HTTP, preserves the correct draft and cannot unlock a newer request`,
       async (action) => {
-        const fetch = setup();
+        const fetch = await setup();
         example();
         const old = pendingHttp();
         const next = pendingHttp();

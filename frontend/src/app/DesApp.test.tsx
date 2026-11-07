@@ -18,7 +18,7 @@ describe("DES app registration", () => {
     expect(screen.getByRole("tab", { name: /Hill.*Khả dụng/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /DES.*Khả dụng/ }));
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Định dạng DES")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Định dạng DES")).toBeInTheDocument();
     expect(screen.getByLabelText("Chế độ mã khối DES")).toHaveValue("ECB");
   });
   it("keeps DES hidden by default", () => {
@@ -33,7 +33,7 @@ describe("DES app registration", () => {
     const { App: DemoApp } = await import("./App");
     render(<DemoApp />);
     fireEvent.click(screen.getByRole("tab", { name: /DES.*Demo/ }));
-    expect(screen.getByLabelText("Nội dung đầu vào DES")).toHaveValue("");
+    expect(await screen.findByLabelText("Nội dung đầu vào DES")).toHaveValue("");
     fireEvent.change(screen.getByLabelText("Nội dung đầu vào DES"), {
       target: { value: "DES draft" },
     });
@@ -42,7 +42,7 @@ describe("DES app registration", () => {
     await screen.findByText("Đã nhận kết quả mô phỏng.");
     fireEvent.click(screen.getByRole("tab", { name: /Caesar/ }));
     fireEvent.click(screen.getByRole("tab", { name: /DES.*Demo/ }));
-    expect(screen.getByLabelText("Nội dung đầu vào DES")).toHaveValue("DES draft");
+    expect(await screen.findByLabelText("Nội dung đầu vào DES")).toHaveValue("DES draft");
     expect(screen.getByLabelText("Khóa DES")).toHaveValue("any key");
     expect(screen.getByLabelText("Nội dung kết quả DES")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: /Đặt lại tất cả/ }));
@@ -50,7 +50,7 @@ describe("DES app registration", () => {
       expect(screen.getByRole("tab", { name: /Caesar/ })).toHaveAttribute("aria-selected", "true"),
     );
     fireEvent.click(screen.getByRole("tab", { name: /DES.*Demo/ }));
-    expect(screen.getByLabelText("Nội dung đầu vào DES")).toHaveValue("");
+    expect(await screen.findByLabelText("Nội dung đầu vào DES")).toHaveValue("");
     expect(screen.getByLabelText("Khóa DES")).toHaveValue("");
   });
 });

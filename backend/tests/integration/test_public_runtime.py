@@ -28,6 +28,30 @@ def test_frontend_serves_assets_and_deep_links_without_swallowing_api(tmp_path):
         assert client.get("/%2e%2e/private.txt").status_code == 404
 
 
+@pytest.mark.parametrize(
+    ("path", "cache"),
+    [
+        ("assets/index-aB12_cd3.js", "public, max-age=31536000, immutable"),
+        ("assets/RsaWorkspace-aB12_cd3.css", "public, max-age=31536000, immutable"),
+        ("assets/app.js", "no-cache"),
+        ("theme-bootstrap.js", "no-cache"),
+        ("fonts/barlow/font.woff2", "no-cache"),
+        ("index.html", "no-cache"),
+    ],
+)
+def test_frontend_cache_depends_on_asset_fingerprint(tmp_path, path, cache):
+    (tmp_path / "index.html").write_text("<html>cipher UI</html>")
+    target = tmp_path / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("asset")
+    app = FastAPI()
+    register_frontend(app, str(tmp_path))
+    with TestClient(app) as client:
+        assert client.get(f"/{path}").headers["cache-control"] == cache
+        assert client.get("/").headers["cache-control"] == "no-cache"
+        assert client.get("/workspace/rsa").headers["cache-control"] == "no-cache"
+
+
 def test_frontend_requires_real_build(tmp_path):
     with pytest.raises(RuntimeError, match=r"index\.html"):
         register_frontend(FastAPI(), str(tmp_path))

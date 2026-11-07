@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
 describe("Cipher Workbench", () => {
-  it("shows each algorithm title before its mode selector and fills samples on demand", () => {
+  it("shows each algorithm title before its mode selector and fills samples on demand", async () => {
     vi.stubEnv("VITE_ENABLE_HILL", "true");
     vi.stubEnv("VITE_ENABLE_DES", "true");
     try {
@@ -19,7 +19,7 @@ describe("Cipher Workbench", () => {
         "DES",
       ]) {
         fireEvent.click(screen.getByRole("tab", { name: new RegExp(title) }));
-        const heading = screen.getByRole("heading", { name: title });
+        const heading = await screen.findByRole("heading", { name: title });
         const mode = screen.getByRole("radiogroup", { name: "Chế độ" });
         expect(
           heading.compareDocumentPosition(mode) & Node.DOCUMENT_POSITION_FOLLOWING,

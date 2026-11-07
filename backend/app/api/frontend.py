@@ -1,5 +1,6 @@
 """Optional same-origin frontend hosting for the production container."""
 
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -20,7 +21,12 @@ def register_frontend(app: FastAPI, directory: str) -> None:
         if not target.is_relative_to(root):
             raise HTTPException(status_code=404)
         if target.is_file():
-            return FileResponse(target)
+            # Vite fingerprints build assets; stable URLs must revalidate on releases.
+            fingerprinted = re.fullmatch(
+                r"assets/(?:[^/]+/)*[^/]+-[A-Za-z0-9_-]{8,}\.(?:js|css)", path
+            )
+            cache = "public, max-age=31536000, immutable" if fingerprinted else "no-cache"
+            return FileResponse(target, headers={"Cache-Control": cache})
         if Path(path).suffix or path.startswith("assets/"):
             raise HTTPException(status_code=404)
         return FileResponse(root / "index.html", headers={"Cache-Control": "no-cache"})

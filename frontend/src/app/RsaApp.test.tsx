@@ -25,6 +25,7 @@ describe("RSA app registration", () => {
     const { App: FlaggedApp } = await import("./App");
     render(<FlaggedApp />);
     fireEvent.click(screen.getByRole("tab", { name: /RSA.*Khả dụng/ }));
+    await screen.findByRole("heading", { name: "RSA từng bước" });
     expect(screen.getByRole("heading", { name: "RSA từng bước" })).toBeVisible();
     for (const input of screen.getAllByRole("textbox")) expect(input).toHaveValue("");
     expect(screen.queryByText("{7, 187}", { exact: true })).not.toBeInTheDocument();
@@ -44,6 +45,7 @@ describe("RSA app registration", () => {
     render(<FlaggedApp />);
     const rsaTab = screen.getByRole("tab", { name: /RSA/ });
     fireEvent.click(rsaTab);
+    await screen.findByRole("heading", { name: "RSA từng bước" });
     fireEvent.change(screen.getByRole("textbox", { name: "Thông điệp" }), {
       target: { value: "Nội dung mới 😀" },
     });
@@ -52,11 +54,13 @@ describe("RSA app registration", () => {
     });
     fireEvent.click(screen.getByRole("tab", { name: /Caesar/ }));
     fireEvent.click(rsaTab);
+    await screen.findByRole("heading", { name: "RSA từng bước" });
     expect(screen.getByRole("textbox", { name: "Thông điệp" })).toHaveValue("Nội dung mới 😀");
     expect(screen.getByRole("textbox", { name: "p · số nguyên tố" })).toHaveValue("101");
     fireEvent.click(screen.getByRole("button", { name: "Đặt lại tất cả" }));
     expect(screen.getByRole("tab", { name: /Caesar/ })).toHaveAttribute("aria-selected", "true");
     fireEvent.click(rsaTab);
+    await screen.findByRole("heading", { name: "RSA từng bước" });
     for (const input of screen.getAllByRole("textbox")) expect(input).toHaveValue("");
     expect(screen.queryByText("{7, 187}", { exact: true })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
@@ -77,6 +81,7 @@ describe("RSA app registration", () => {
     vi.stubEnv("VITE_ENABLE_RSA", "true");
     render(<PreviewApp />);
     fireEvent.click(screen.getByRole("tab", { name: /RSA.*Khả dụng/ }));
+    await screen.findByRole("heading", { name: "RSA từng bước" });
     expect(screen.getByRole("textbox", { name: "p · số nguyên tố" })).toHaveValue("");
     fireEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
     fireEvent.click(screen.getByRole("button", { name: "Tạo khóa" }));

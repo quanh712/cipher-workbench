@@ -28,7 +28,7 @@ describe("Hill tab integration", () => {
     render(<App />);
     await user.type(screen.getByRole("textbox", { name: "Nội dung đầu vào" }), "HELLO");
     await user.click(screen.getByRole("tab", { name: /Hill/ }));
-    expect(screen.getByRole("textbox", { name: "Văn bản đầu vào" })).toHaveValue("HELLO");
+    expect(await screen.findByRole("textbox", { name: "Văn bản đầu vào" })).toHaveValue("HELLO");
     expect(hillApi.analyze).not.toHaveBeenCalled();
     for (const input of screen
       .getAllByRole("textbox")
@@ -39,6 +39,8 @@ describe("Hill tab integration", () => {
     await user.click(screen.getByRole("tab", { name: /Caesar/ }));
     expect(screen.getByRole("textbox", { name: "Nội dung đầu vào" })).toHaveValue("HELLO");
     await user.click(screen.getByRole("tab", { name: /Hill/ }));
-    expect(screen.getByRole("textbox", { name: "Văn bản đầu vào" })).toHaveValue("HELLO HILL");
+    expect(await screen.findByRole("textbox", { name: "Văn bản đầu vào" })).toHaveValue(
+      "HELLO HILL",
+    );
   });
 });
