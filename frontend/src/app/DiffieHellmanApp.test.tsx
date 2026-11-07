@@ -1,7 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getHealthStatus } from "../features/history/services/historyApi";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createDeferred,
   createDiffieHellmanGateway,
@@ -9,14 +8,6 @@ import {
 import { createDhPresetResult } from "../features/diffieHellman/test/fixtures";
 import { App } from "./App";
 
-vi.mock("../features/history/services/historyApi", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../features/history/services/historyApi")>()),
-  getHealthStatus: vi.fn(),
-}));
-
-beforeEach(() => {
-  vi.mocked(getHealthStatus).mockResolvedValue({ database: "ok", history: "disabled" });
-});
 afterEach(() => vi.unstubAllEnvs());
 
 function openDh() {
@@ -144,7 +135,7 @@ describe("Diffie–Hellman app registration", () => {
 
   it("retains the draft when visiting history and includes DH in history filters", async () => {
     vi.stubEnv("VITE_ENABLE_DIFFIE_HELLMAN", "true");
-    vi.mocked(getHealthStatus).mockResolvedValue({ database: "ok", history: "enabled" });
+
     const gateway = createDiffieHellmanGateway();
     render(<App diffieHellmanGateway={gateway} />);
     await screen.findByRole("button", { name: "Lịch sử thao tác" });

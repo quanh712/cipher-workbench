@@ -23,7 +23,6 @@ paseo.json
 
 # Source-only artifacts (not needed at runtime)
 *.docx
-Caesar_Cipher_Tool_Demo.html
 
 # Keep: app/ recursively (Python modules are copied into the image)
 # Local secrets

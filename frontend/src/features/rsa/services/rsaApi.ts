@@ -35,12 +35,16 @@ function decimals(value: unknown): string[] {
   return (value as unknown[]).map((item) => decimal(item));
 }
 
-async function post(path: string, payload: JsonObject, signal: AbortSignal): Promise<JsonObject> {
+async function post(
+  path: string,
+  payload: JsonObject | FormData,
+  signal: AbortSignal,
+): Promise<JsonObject> {
   signal.throwIfAborted();
   const response = await browserHistoryFetch(`/api/rsa/${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    headers: payload instanceof FormData ? undefined : { "Content-Type": "application/json" },
+    body: payload instanceof FormData ? payload : JSON.stringify(payload),
     credentials: "include",
     signal,
   });
@@ -87,6 +91,57 @@ function traceRows(
 }
 
 export const rsaApi: RsaGateway = {
+  async standardSignature(operation, payload, signal) {
+    const body = await post(operation, payload, signal);
+    const result = object(body.result);
+    requireValue(
+      result.mode === "standard" && (result.source === "text" || result.source === "file"),
+    );
+    requireValue(typeof result.sha256 === "string" && /^[a-f0-9]{64}$/.test(result.sha256));
+    integer(result.contentBytes);
+    const algorithm = object(result.algorithm);
+    requireValue(
+      algorithm.scheme === "RSASSA-PSS" &&
+        algorithm.hash === "SHA-256" &&
+        algorithm.mgf === "MGF1-SHA-256" &&
+        algorithm.saltLength === 32 &&
+        algorithm.signatureEncoding === "base64",
+    );
+    if (operation === "sign")
+      requireValue(typeof result.signature === "string" && typeof result.publicKeyPem === "string");
+    else requireValue(typeof result.valid === "boolean");
+    return result as unknown as import("./rsaGateway").PemResult;
+  },
+  async encryptFile(parameters, signal) {
+    const form = new FormData();
+    form.set("file", parameters.file);
+    form.set("e", parameters.e);
+    form.set("n", parameters.n);
+    form.set("mode", parameters.mode);
+    form.set("traceBlockIndex", "0");
+    const body = await post("encrypt", form, signal);
+    requireValue(body.inputType === "text" && body.mode === parameters.mode);
+    const blocks = decimals(body.blocks);
+    const cipher = decimals(body.cipher);
+    requireValue(blocks.length === cipher.length);
+    const originalUtf8ByteLength = integer(body.originalUtf8ByteLength);
+    const blockSize = integer(body.blockSize);
+    const output =
+      parameters.mode === "block"
+        ? JSON.stringify({ mode: parameters.mode, cipher, originalUtf8ByteLength })
+        : JSON.stringify(cipher);
+    return {
+      operation: "encrypt",
+      inputType: "text",
+      output,
+      blocks,
+      cipher,
+      mode: parameters.mode,
+      originalUtf8ByteLength,
+      blockSize,
+      rows: traceRows(body.trace, "encrypt"),
+    };
+  },
   async signature(parameters, signal) {
     const { operation, ...payload } = parameters;
     const body = await post(`${operation}/raw`, payload, signal);
@@ -145,7 +200,10 @@ export const rsaApi: RsaGateway = {
   async transform(parameters, signal) {
     const { operation, inputType, n } = parameters;
     const payload: JsonObject = { n, inputType, traceBlockIndex: 0 };
-    if (inputType === "text") payload.mode = "char";
+    const mode = parameters.mode ?? "char";
+    if (inputType === "text") payload.mode = mode;
+    if (operation === "decrypt" && mode === "block")
+      payload.originalUtf8ByteLength = parameters.originalUtf8ByteLength;
     if (operation === "encrypt") {
       payload.e = parameters.e;
       payload.data = parameters.data;
@@ -156,7 +214,10 @@ export const rsaApi: RsaGateway = {
     const body = await post(operation, payload, signal);
     requireValue(body.inputType === inputType);
     requireValue(
-      inputType === "text" ? body.mode === "char" && body.blockSize === 1 : body.blockSize === null,
+      inputType === "text"
+        ? body.mode === mode &&
+            (mode === "char" ? body.blockSize === 1 : integer(body.blockSize) >= 1)
+        : body.blockSize === null,
     );
     if (inputType === "text") integer(body.originalUtf8ByteLength);
     const blocks = decimals(body.blocks);
@@ -166,17 +227,36 @@ export const rsaApi: RsaGateway = {
     if (operation === "encrypt") {
       cipher = decimals(body.cipher);
       requireValue(cipher.length === blocks.length);
-      const expectedLength = inputType === "number" ? 1 : Array.from(parameters.data).length;
+      const expectedLength =
+        inputType === "number"
+          ? 1
+          : mode === "char"
+            ? Array.from(parameters.data).length
+            : Math.ceil(new TextEncoder().encode(parameters.data).length / integer(body.blockSize));
       requireValue(blocks.length === expectedLength);
-      output = JSON.stringify(cipher);
+      output =
+        inputType === "text" && mode === "block"
+          ? JSON.stringify({ mode, cipher, originalUtf8ByteLength: body.originalUtf8ByteLength })
+          : JSON.stringify(cipher);
     } else {
       cipher = parameters.cipher;
       requireValue(blocks.length === cipher.length && typeof body.plaintext === "string");
       output = body.plaintext as string;
       if (inputType === "number") requireValue(decimal(output) === blocks[0]);
-      else requireValue(Array.from(output).length === blocks.length);
+      else if (mode === "char") requireValue(Array.from(output).length === blocks.length);
     }
-    return { operation, inputType, output, blocks, cipher, rows: traceRows(body.trace, operation) };
+    return {
+      operation,
+      inputType,
+      output,
+      blocks,
+      cipher,
+      mode,
+      blockSize: inputType === "text" ? integer(body.blockSize) : undefined,
+      originalUtf8ByteLength:
+        inputType === "text" ? integer(body.originalUtf8ByteLength) : undefined,
+      rows: traceRows(body.trace, operation),
+    };
   },
   async generateKey(parameters, signal) {
     const body = await post("keys", { p: parameters.p, q: parameters.q, e: parameters.e }, signal);

@@ -8,7 +8,7 @@ from typing import Any, Literal
 from pydantic import Field
 
 from app import config
-from app.api.rsa_schemas import ExactModel, RsaErrorResponse, error, parse_decimal
+from app.api.rsa_schemas import ExactModel, error, parse_decimal
 
 MAX_PEM_BYTES = 64 * 1024
 MAX_PASSPHRASE_BYTES = 4 * 1024
@@ -107,10 +107,6 @@ class StandardVerifyResponse(ExactModel):
     success: Literal[True]
     result: StandardVerifyResult
     history: HistoryStatus
-
-
-class SignatureErrorResponse(RsaErrorResponse):
-    pass
 
 
 @dataclass(frozen=True)

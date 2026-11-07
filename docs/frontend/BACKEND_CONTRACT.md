@@ -7,23 +7,23 @@ Frontend tích hợp theo contract chính thức của repo
 
 - Contract SQLite runtime hiện hành: BE được pin tại
   `229c69d7c9af8413a780002b266bdb7651e79cb4`, đối chiếu ngày 07/10/2026 với
-  [consumer guide](../../cipher-workbench-be/repo_docs/frontend-integration.md),
-  [health route](../../cipher-workbench-be/app/api/routes_health.py),
-  [history route](../../cipher-workbench-be/app/api/routes_history.py) và
-  [config](../../cipher-workbench-be/app/config.py). Runtime history dùng SQLite local
+  [consumer guide](../contracts/frontend-integration.md),
+  [health route](../../backend/app/api/routes_health.py),
+  [history route](../../backend/app/api/routes_history.py) và
+  [config](../../backend/app/config.py). Runtime history dùng SQLite local
   trên backend; các mốc PostgreSQL dưới đây là lịch sử. Mốc source này không chứng
   minh image trong stack FE đang chạy đã được cập nhật. Checkout BE sibling hiện có thể mới
   hơn pin runtime; regression production luôn kiểm image đang chạy, không tự rebuild BE.
 - Contract DES: [`31438eb`](https://github.com/kiendt2312/cipher_workbench-be/blob/31438eb49c94cdef570b3ca5afd2c2fff9e73501/repo_docs/frontend-integration.md),
   nhánh `docs/des-fe-guide`, mục 4.7, 8, 9.2; OpenSpec DES hiện hành và implementation
-  cùng revision. Xem [DES_SPEC.md](DES_SPEC.md). Bật bằng `VITE_ENABLE_DES=true` sau khi
+  cùng revision. Xem [DES_SPEC.md](../scopes/DES_SPEC.md). Bật bằng `VITE_ENABLE_DES=true` sau khi
   build/deploy BE tương thích; PostgreSQL legacy từng cần migration `0003`, còn
   SQLite dùng baseline `sqlite_0001` đã chứa DES. DES demo là cờ riêng,
   không fallback cho API thật.
 
 - Contract Hill: [`4505ef7`](https://github.com/kiendt2312/cipher_workbench-be/blob/4505ef776d51d6657f26552531a9809e436318b9/repo_docs/frontend-integration.md),
   mục A.7, 4.6, 9.1 và các OpenSpec trong `openspec/changes/add-hill-cipher/specs/`.
-  Xem [HILL_SPEC.md](HILL_SPEC.md) cho payload, response, Unicode và giới hạn 5 MiB.
+  Xem [HILL_SPEC.md](../scopes/HILL_SPEC.md) cho payload, response, Unicode và giới hạn 5 MiB.
 - Mốc lịch sử cho health và lịch sử: BE [`main` tại `c314fa8`](https://github.com/kiendt2312/cipher_workbench-be/blob/c314fa87bb87ad42ea10cd4fd96889ca176bfe26/repo_docs/frontend-integration.md),
   mục A và 16–17. `GET /api/health` trả cả `database` lẫn `history`; chỉ đọc lịch sử
   máy chủ nếu `database: "ok"` **và** `history: "enabled"`.
@@ -31,7 +31,7 @@ Frontend tích hợp theo contract chính thức của repo
   là mốc triển khai PostgreSQL ban đầu, **chưa có** cờ `history` trong health.
 - Consumer guide và Backend implementation: [`fb459dd`](https://github.com/kiendt2312/cipher_workbench-be/blob/fb459ddcf35c622250b836f75fb14702b2eb0cf4/repo_docs/frontend-integration.md)
   (`fb459ddcf35c622250b836f75fb14702b2eb0cf4`, cập nhật Playfair ngày 28/09/2026).
-- Nguồn có thẩm quyền hiện hành: [OpenSpec trong checkout Backend](../../cipher-workbench-be/openspec/specs).
+- Nguồn có thẩm quyền hiện hành: [OpenSpec trong checkout Backend](../../backend/openspec/specs).
   `openspec/changes/archive/` chỉ giữ lịch sử quyết định. Các revision Hill/DES
   ở trên là mốc bổ sung cipher; schema SQLite hiện có cả tám cipher, gồm RSA.
 
@@ -67,7 +67,7 @@ Checkout BE được Compose build sử dụng phải đúng revision đã ghim;
 
 ## RSA
 
-FE nối API RSA của BE `229c69d` qua `src/features/rsa/services/rsaApi.ts`, bật bằng `VITE_ENABLE_RSA=true`. Chữ ký số dùng `/api/rsa/sign/raw` (`m,d,e,n`) và `/api/rsa/verify/raw` (`m,signature,e,n`), nhận envelope `result/history`, trace và `valid` từ BE; gửi credentials cho cookie profile lịch sử. Sinh khóa dùng `/api/rsa/keys`; mỗi tác vụ số/văn bản chọn mã hóa hoặc giải mã riêng qua `/api/rsa/encrypt` hoặc `/api/rsa/decrypt`, dùng khóa sinh hoặc khóa nhập tay tương ứng. Bản mã hiển thị và nhập giải mã dùng mảng JSON chuỗi số. Không tự chạy khi mở workspace hoặc chọn ví dụ. Văn bản dùng `mode=char`. Tất cả operand là chuỗi thập phân; trace lấy từ BE. `P ≥ n` hoặc ký tự có code point ≥ n bị BE từ chối; FE giữ nguyên message và không tính fallback. Xem [RSA_SPEC.md](RSA_SPEC.md) cho mapping và lệnh integration test.
+FE nối API RSA của BE `229c69d` qua `src/features/rsa/services/rsaApi.ts`, bật bằng `VITE_ENABLE_RSA=true`. Chữ ký số dùng `/api/rsa/sign/raw` (`m,d,e,n`) và `/api/rsa/verify/raw` (`m,signature,e,n`), nhận envelope `result/history`, trace và `valid` từ BE; gửi credentials cho cookie profile lịch sử. Sinh khóa dùng `/api/rsa/keys`; mỗi tác vụ số/văn bản chọn mã hóa hoặc giải mã riêng qua `/api/rsa/encrypt` hoặc `/api/rsa/decrypt`, dùng khóa sinh hoặc khóa nhập tay tương ứng. Bản mã hiển thị và nhập giải mã dùng mảng JSON chuỗi số. Không tự chạy khi mở workspace hoặc chọn ví dụ. Văn bản dùng `mode=char`. Tất cả operand là chuỗi thập phân; trace lấy từ BE. `P ≥ n` hoặc ký tự có code point ≥ n bị BE từ chối; FE giữ nguyên message và không tính fallback. Xem [RSA_SPEC.md](../scopes/RSA_SPEC.md) cho mapping và lệnh integration test.
 
 ## Lịch sử server trên SQLite
 
@@ -126,7 +126,7 @@ FE nối API RSA của BE `229c69d` qua `src/features/rsa/services/rsaApi.ts`, b
   vẫn thuộc quyền quản lý của BE, FE không sử dụng `LEGACY_DATABASE_URL`.
 - Cả Compose mặc định và Compose SQLite đều chạy migration SQLite, mount `/data`
   cho migrate/backend; frontend tiếp tục chỉ gọi HTTP `/api`.
-- Xem [checklist cấu hình chung](../../sqlite-integration-config-checklist.md).
+- Xem [hướng dẫn cấu hình và kiểm tra SQLite](../backend/sqlite-history-runbook.md).
   Compose SQLite standalone và hướng dẫn rehearsal ở [SQLITE_COMPOSE.md](SQLITE_COMPOSE.md).
   PostgreSQL local/verify đã được retire sau backup và restore reconciliation.
 
@@ -196,7 +196,7 @@ browser integration tests với BE ở commit được ghim, gồm Unicode round
   copy/download text theo lựa chọn này. File preview trả bản thô và padding; download gửi
   `strip_padding="true"|"false"` theo lựa chọn (BE mặc định false). Bộ lọc có thể bỏ nhầm X/Q thật.
   Phân tích dùng bản thô để giữ đủ cặp chữ; FE không tính bộ lọc thay BE.
-  Chi tiết và ví dụ ở [PLAYFAIR_VIGENERE_SPEC.md](PLAYFAIR_VIGENERE_SPEC.md#4-playfair).
+  Chi tiết và ví dụ ở [PLAYFAIR_VIGENERE_SPEC.md](../scopes/PLAYFAIR_VIGENERE_SPEC.md#4-playfair).
 - Columnar giữ nguyên Unicode code point, kể cả whitespace/CRLF/emoji; không chuẩn hóa hoặc đệm.
   File UTF-8 có BOM đầu vào: preview bỏ BOM logic, attachment giữ BOM. File BOM-only hợp lệ.
 - File năm cipher cũ giới hạn chính xác 5 MiB; preview dùng `response_mode=content`.

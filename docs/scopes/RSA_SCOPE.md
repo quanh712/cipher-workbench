@@ -1,5 +1,8 @@
 # Cipher Workbench — Scope Frontend RSA minh họa
 
+> Tài liệu theo đợt cũ được giữ để truy vết. Phạm vi FE/BE hiện tại xem
+> [RSA_CURRENT_SCOPE.md](RSA_CURRENT_SCOPE.md) và [phạm vi chung](COMMON_SCOPE.md).
+
 ## 1. Nguồn và mục tiêu
 
 Nguồn yêu cầu: file `rsa-giai-thich.html` do người dùng cung cấp. Đây là prototype giáo dục chạy phép tính RSA trực tiếp trong trình duyệt, không phải contract API hay thiết kế cho mã hóa dữ liệu thật.

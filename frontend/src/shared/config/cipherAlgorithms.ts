@@ -83,5 +83,3 @@ export const getCipherAlgorithms = () =>
         ? { ...algorithm, status: "Khả dụng", available: true }
         : algorithm,
     );
-
-export const cipherAlgorithms = getCipherAlgorithms();

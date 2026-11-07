@@ -2,14 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { diffieHellmanApi } from "../features/diffieHellman/services/diffieHellmanApi";
 import { createDhPresetWireResult } from "../features/diffieHellman/test/fixtures";
-import { getHealthStatus } from "../features/history/services/historyApi";
 import { App } from "./App";
-
-// Only optional health is isolated; App, hook, HTTP adapter and response validators are real.
-vi.mock("../features/history/services/historyApi", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../features/history/services/historyApi")>()),
-  getHealthStatus: vi.fn(),
-}));
 
 const exchangeBody = () => createDhPresetWireResult();
 const randomBody = () => createDhPresetWireResult();
@@ -48,7 +41,6 @@ function expectIdle() {
 
 beforeEach(() => {
   vi.stubEnv("VITE_ENABLE_DIFFIE_HELLMAN", "true");
-  vi.mocked(getHealthStatus).mockResolvedValue({ database: "ok", history: "disabled" });
 });
 afterEach(() => {
   vi.unstubAllEnvs();

@@ -1,11 +1,14 @@
 # Cipher Workbench — Frontend Affine Cipher Specification
 
+> Tài liệu theo đợt cũ được giữ để truy vết. Phạm vi FE/BE hiện tại xem
+> [AFFINE_CURRENT_SCOPE.md](AFFINE_CURRENT_SCOPE.md) và [phạm vi chung](COMMON_SCOPE.md).
+
 ## 1. Trạng thái và quyền ưu tiên
 
 Tài liệu này định nghĩa phạm vi, hành vi giao diện và kế hoạch triển khai Affine ở Frontend. Nó
 không phải API contract và không được dùng để suy đoán hành vi Backend.
 
-Contract có thẩm quyền được ghim tại [`BACKEND_CONTRACT.md`](BACKEND_CONTRACT.md). Backend Affine đã
+Contract có thẩm quyền được ghim tại [`BACKEND_CONTRACT.md`](../frontend/BACKEND_CONTRACT.md). Backend Affine đã
 được implement trong commit `c55278f207e84811cf26e3a748df612cd6a9915e`; OpenSpec Affine vẫn
 đang active tại thời điểm tích hợp FE. Mục 8 ghi lại phần contract FE cần tiêu thụ.
 
@@ -225,7 +228,7 @@ hiển thị trace từng ký tự trong checkpoint đầu tiên.
 ## 8. Contract Backend Affine hiện hành
 
 Nguồn có thẩm quyền là consumer guide và OpenSpec tại revision trong
-[`BACKEND_CONTRACT.md`](BACKEND_CONTRACT.md). Các shape dưới đây là tóm tắt phục vụ triển khai FE.
+[`BACKEND_CONTRACT.md`](../frontend/BACKEND_CONTRACT.md). Các shape dưới đây là tóm tắt phục vụ triển khai FE.
 
 Text:
 

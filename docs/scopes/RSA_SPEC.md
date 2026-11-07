@@ -1,10 +1,13 @@
 # Cipher Workbench — Frontend RSA Specification
 
+> Tài liệu theo đợt cũ được giữ để truy vết. Phạm vi FE/BE hiện tại xem
+> [RSA_CURRENT_SCOPE.md](RSA_CURRENT_SCOPE.md) và [phạm vi chung](COMMON_SCOPE.md).
+
 ## Trạng thái và phạm vi
 
-RSA nối API BE `229c69d7c9af8413a780002b266bdb7651e79cb4`, bật bằng `VITE_ENABLE_RSA=true`. Đợt đồng bộ giao diện ngày 08/10/2026 chỉ sửa FE. Nguồn contract: [routes](../../cipher-workbench-be/app/api/routes_rsa.py), [schema](../../cipher-workbench-be/app/api/rsa_schemas.py). Contract BE được ưu tiên so với prototype và phạm vi cũ trong [RSA_SCOPE.md](RSA_SCOPE.md).
+RSA nối API BE `229c69d7c9af8413a780002b266bdb7651e79cb4`, bật bằng `VITE_ENABLE_RSA=true`. Đợt đồng bộ giao diện ngày 08/10/2026 chỉ sửa FE. Nguồn contract: [routes](../../backend/app/api/routes_rsa.py), [schema](../../backend/app/api/rsa_schemas.py). Contract BE được ưu tiên so với prototype và phạm vi cũ trong [RSA_SCOPE.md](RSA_SCOPE.md).
 
-Workspace có hai tab **Mã hóa / Chữ ký số** và phần khóa dùng chung. Tab Mã hóa giữ bố cục dọc: luồng Alice/Bob có thể thu gọn → khóa RSA → một khối số → văn bản → giải thích có thể thu gọn. Tab Chữ ký số ký và kiểm tra một số qua API thật, theo [contract chữ ký BE](../../cipher-workbench-be/docs/rsa-signatures-private-history.md). Dùng theme, panel, nút và `CipherModeSelector` chung với các thuật toán khác; không chuyển sang bố cục hai cột toàn trang. Các bảng cuộn trong khung, không làm trang cuộn ngang ở 375 px.
+Workspace có hai tab **Mã hóa / Chữ ký số** và phần khóa dùng chung. Tab Mã hóa giữ bố cục dọc: luồng Alice/Bob có thể thu gọn → khóa RSA → một khối số → văn bản → giải thích có thể thu gọn. Tab Chữ ký số ký và kiểm tra một số qua API thật, theo [contract chữ ký BE](../backend/rsa-signatures-private-history.md). Dùng theme, panel, nút và `CipherModeSelector` chung với các thuật toán khác; không chuyển sang bố cục hai cột toàn trang. Các bảng cuộn trong khung, không làm trang cuộn ngang ở 375 px.
 
 ## Khóa và thao tác
 

@@ -1,17 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getHealthStatus } from "../features/history/services/historyApi";
+import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
-
-vi.mock("../features/history/services/historyApi", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../features/history/services/historyApi")>()),
-  getHealthStatus: vi.fn(),
-}));
-
-beforeEach(() => {
-  vi.mocked(getHealthStatus).mockResolvedValue({ database: "ok", history: "disabled" });
-});
 
 describe("Cipher Workbench", () => {
   it("shows each algorithm title before its mode selector and fills samples on demand", () => {
@@ -51,11 +41,15 @@ describe("Cipher Workbench", () => {
       vi.unstubAllEnvs();
     }
   });
-  it("keeps browser history available when server history is disabled", async () => {
-    vi.mocked(getHealthStatus).mockResolvedValue({ database: "disabled", history: "disabled" });
-    render(<App />);
-    expect(await screen.findByRole("button", { name: "Lịch sử thao tác" })).toBeVisible();
-    expect(getHealthStatus).not.toHaveBeenCalled();
+  it("keeps browser history available without fetching server health", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch");
+    try {
+      render(<App />);
+      expect(await screen.findByRole("button", { name: "Lịch sử thao tác" })).toBeVisible();
+      expect(fetch).not.toHaveBeenCalled();
+    } finally {
+      fetch.mockRestore();
+    }
   });
 
   it.each([

@@ -9,7 +9,7 @@ backend này. Hai tài liệu [`rsa-frontend-contract.md`](rsa-frontend-contract
 theo feature; khi wording khác nhau, tài liệu hiện tại thắng và phải được cập nhật trước.
 
 > **RSA sign/verify và private history (2026-10-11):** đọc
-> [`../docs/rsa-signatures-private-history.md`](../docs/rsa-signatures-private-history.md).
+> [`../docs/rsa-signatures-private-history.md`](../backend/rsa-signatures-private-history.md).
 > Contract mới này thay thế mọi mô tả lịch sử public/30 ngày/không-cookie cũ còn nằm
 > trong các mục có ngày 2026-09-28 bên dưới. History hiện private theo browser profile,
 > giữ tối đa 5 giờ và hỗ trợ list/detail/download/delete.
@@ -18,7 +18,7 @@ theo feature; khi wording khác nhau, tài liệu hiện tại thắng và phả
   (gồm bốn RSA và sáu DH), `GET /api/hill/key/random`, `GET /api/health` và
   `GET /api/history` (history tùy chọn, dùng SQLite cục bộ trên backend).
 - **Người mới:** đọc mục **A. Bắt đầu nhanh** (khoảng 10 phút) rồi dùng file
-  [`examples/cipher-api.ts`](examples/cipher-api.ts). Các mục 1–19 là tra cứu chi tiết.
+  [`examples/cipher-api.ts`](../../backend/repo_docs/examples/cipher-api.ts). Các mục 1–19 là tra cứu chi tiết.
 - **Đã tích hợp trước đây:** đọc mục **0. Thay đổi gần đây**.
 - Backend **không có UI**: giao diện thuộc project FE. Thử API tại `/docs`
   (<http://localhost:8080/docs> khi chạy docker-compose).
@@ -162,7 +162,7 @@ của `/api/dh/caesar` xuất hiện trong history chung.
 
 ### A.4 API client dùng ngay
 
-File [`examples/cipher-api.ts`](examples/cipher-api.ts) (TypeScript, không phụ thuộc
+File [`examples/cipher-api.ts`](../../backend/repo_docs/examples/cipher-api.ts) (TypeScript, không phụ thuộc
 thư viện) gồm `transformText`, `previewFile`, `downloadFile`, `saveBlob`, `getHealth`,
 `canShowServerHistory`, `getHistory`, các helper Hill/DES và bộ hàm lịch sử trên
 trình duyệt. File đã được compile với
@@ -1067,7 +1067,7 @@ trên máy đo của backend; FE phải hiện trạng thái đang xử lý, kh�
 ## 5. TypeScript contract dùng trực tiếp
 
 Các type legacy dưới đây mô tả năm cipher cũ; Hill và DES dùng các type/helper riêng
-trong [`examples/cipher-api.ts`](examples/cipher-api.ts) (`DesEncryptRequest`,
+trong [`examples/cipher-api.ts`](../../backend/repo_docs/examples/cipher-api.ts) (`DesEncryptRequest`,
 `DesDecryptRequest`, `DesTraceRequest`, `DesFileRequest`, `DesResponse`, `DesWarning`,
 `DesTraceResponse`). Caesar text dùng một integer token,
 Affine dùng hai integer token; Vigenère, Playfair và Columnar dùng string key. Multipart
@@ -2078,7 +2078,7 @@ khuyến nghị để FE bám theo contract API.
 
 ## 13. Hành vi demo cũ không được sao chép
 
-[`Caesar_Cipher_Tool_Demo.html`](../Caesar_Cipher_Tool_Demo.html) chỉ là reference UI cũ.
+[`Caesar_Cipher_Tool_Demo.html`](../scopes/Caesar_Cipher_Tool_Demo.html) chỉ là reference UI cũ.
 Không sao chép:
 
 - giới hạn `1 MB` thay vì 5 MiB;
@@ -2183,48 +2183,48 @@ hiện tại luôn thắng demo.
 
 Thứ tự áp dụng:
 
-1. Primary authority: spec hiện hành trong [`openspec/specs/`](../openspec/specs/)
+1. Primary authority: spec hiện hành trong [`openspec/specs/`](../../backend/openspec/specs)
    (mỗi capability một file, ví dụ `text-cipher-api`, `history-api`, `app-runtime`);
-   lịch sử quyết định nằm trong [`openspec/changes/archive/`](../openspec/changes/archive/).
+   lịch sử quyết định nằm trong [`openspec/changes/archive/`](../../backend/openspec/changes/archive).
    Riêng RSA đã ship và change đã sync/archive tại
-   [`openspec/changes/archive/2026-11-03-add-rsa-cipher/`](../openspec/changes/archive/2026-11-03-add-rsa-cipher/) là authority;
+   [`openspec/changes/archive/2026-11-03-add-rsa-cipher/`](../../backend/openspec/changes/archive/2026-11-03-add-rsa-cipher) là authority;
    Q16 thay thế riêng quyết định no-history bằng safe transform metadata; R1–R2
    reconcile hai error edge mà không mở rộng API. UI không có spec ở backend: giao
    diện thuộc project FE. Sau spec là
    current implementation/tests cho observed behavior; cuối cùng runtime
    `/openapi.json` là machine-readable projection. Known OpenAPI under-description
    ở §2 không được dùng để thu hẹp behavior đã được spec/runtime test chấp nhận.
-2. [README hiện tại](../README.md) và consumer guide này; nếu lệch mục 1 thì guide
+2. [README hiện tại](../../backend/README.md) và consumer guide này; nếu lệch mục 1 thì guide
    phải được sửa, không được biến wording cũ thành contract mới.
 3. `affine-cipher.html` (reference ngoài repository) và demo/mock cũ chỉ để tham khảo,
    không có quyền ghi đè production behavior. Source DOCX và
-   [bản scope Caesar bảo tồn](../docs/reference/be-scope-v1.0.md) chỉ dùng truy vết.
+   [bản scope Caesar bảo tồn](../scopes/be-scope-v1.0.md) chỉ dùng truy vết.
 
 Nếu các nguồn trong primary tier mâu thuẫn ngoài các under-description đã ghi rõ,
 đó là defect cần reconcile với owner/spec, không phải quyền để FE tự chọn behavior
 hoặc để guide âm thầm redesign contract.
 
 Các implementation link chính để audit contract là
-[`schemas.py`](../app/api/schemas.py),
-[`messages.py`](../app/errors/messages.py),
-[`file_processing.py`](../app/services/file_processing.py),
-[`routes_affine_text.py`](../app/api/routes_affine_text.py) và
-[`routes_affine_file.py`](../app/api/routes_affine_file.py),
-[`routes_columnar_text.py`](../app/api/routes_columnar_text.py) và
-[`routes_columnar_file.py`](../app/api/routes_columnar_file.py),
-[`routes_hill.py`](../app/api/routes_hill.py) và
-[`hill_schemas.py`](../app/api/hill_schemas.py),
-[`routes_des.py`](../app/api/routes_des.py),
-[`routes_des_file.py`](../app/api/routes_des_file.py) và
-[`des_schemas.py`](../app/api/des_schemas.py),
-[`routes_rsa.py`](../app/api/routes_rsa.py),
-[`rsa_schemas.py`](../app/api/rsa_schemas.py) và supporting reference
+[`schemas.py`](../../backend/app/api/schemas.py),
+[`messages.py`](../../backend/app/errors/messages.py),
+[`file_processing.py`](../../backend/app/services/file_processing.py),
+[`routes_affine_text.py`](../../backend/app/api/routes_affine_text.py) và
+[`routes_affine_file.py`](../../backend/app/api/routes_affine_file.py),
+[`routes_columnar_text.py`](../../backend/app/api/routes_columnar_text.py) và
+[`routes_columnar_file.py`](../../backend/app/api/routes_columnar_file.py),
+[`routes_hill.py`](../../backend/app/api/routes_hill.py) và
+[`hill_schemas.py`](../../backend/app/api/hill_schemas.py),
+[`routes_des.py`](../../backend/app/api/routes_des.py),
+[`routes_des_file.py`](../../backend/app/api/routes_des_file.py) và
+[`des_schemas.py`](../../backend/app/api/des_schemas.py),
+[`routes_rsa.py`](../../backend/app/api/routes_rsa.py),
+[`rsa_schemas.py`](../../backend/app/api/rsa_schemas.py) và supporting reference
 [`rsa-frontend-contract.md`](rsa-frontend-contract.md),
-[`routes_dh.py`](../app/api/routes_dh.py), [`dh_schemas.py`](../app/api/dh_schemas.py)
+[`routes_dh.py`](../../backend/app/api/routes_dh.py), [`dh_schemas.py`](../../backend/app/api/dh_schemas.py)
 và supporting reference [`dh-frontend-contract.md`](dh-frontend-contract.md),
-[`routes_health.py`](../app/api/routes_health.py) và
-[`routes_history.py`](../app/api/routes_history.py). File mẫu
-[`examples/cipher-api.ts`](examples/cipher-api.ts) phải được cập nhật cùng tài liệu
+[`routes_health.py`](../../backend/app/api/routes_health.py) và
+[`routes_history.py`](../../backend/app/api/routes_history.py). File mẫu
+[`examples/cipher-api.ts`](../../backend/repo_docs/examples/cipher-api.ts) phải được cập nhật cùng tài liệu
 khi contract đổi.
 
 Guide không lặp toàn bộ ma trận scenario hoặc decision history của OpenSpec. Khi
@@ -3377,7 +3377,7 @@ const decrypted = await postRsaJson<TextDecryptResponse>("/api/rsa/decrypt", {
 ```
 
 `postRsaJson` là ví dụ cục bộ trong tài liệu này, không phải export hiện có của
-[`examples/cipher-api.ts`](examples/cipher-api.ts). Khi đưa vào FE thật, giữ request
+[`examples/cipher-api.ts`](../../backend/repo_docs/examples/cipher-api.ts). Khi đưa vào FE thật, giữ request
 object riêng theo từng union variant để tránh spread field thừa.
 
 ### 13. History, privacy và statelessness
@@ -3455,20 +3455,20 @@ chỉ hiển thị plaintext quan sát được cùng cảnh báo textbook RSA.
 Authority của contract này theo thứ tự:
 
 1. Accepted OpenSpec change Q1–Q16 và hai làm rõ corrective R1–R2 tại
-   [`openspec/changes/archive/2026-11-03-add-rsa-cipher/`](../openspec/changes/archive/2026-11-03-add-rsa-cipher/), trong đó
+   [`openspec/changes/archive/2026-11-03-add-rsa-cipher/`](../../backend/openspec/changes/archive/2026-11-03-add-rsa-cipher), trong đó
    Q16 thay thế riêng quyết định “no history” cho safe transform metadata; R1–R2 chỉ
    reconcile hai error edge nêu tại mục 11.1.
 2. Runtime/schema/error mapping hiện tại:
-   [`routes_rsa.py`](../app/api/routes_rsa.py),
-   [`rsa_schemas.py`](../app/api/rsa_schemas.py),
-   [`rsa.py`](../app/core/rsa.py),
-   [`handlers.py`](../app/errors/handlers.py) và
-   [`messages.py`](../app/errors/messages.py).
+   [`routes_rsa.py`](../../backend/app/api/routes_rsa.py),
+   [`rsa_schemas.py`](../../backend/app/api/rsa_schemas.py),
+   [`rsa.py`](../../backend/app/core/rsa.py),
+   [`handlers.py`](../../backend/app/errors/handlers.py) và
+   [`messages.py`](../../backend/app/errors/messages.py).
 3. Contract tests:
-   [`test_rsa_endpoints.py`](../tests/integration/test_rsa_endpoints.py),
-   [`test_rsa_file_encrypt.py`](../tests/integration/test_rsa_file_encrypt.py),
-   [`test_rsa_validation.py`](../tests/unit/test_rsa_validation.py),
-   [`test_rsa.py`](../tests/unit/test_rsa.py) và các test history/guard liên quan.
+   [`test_rsa_endpoints.py`](../../backend/tests/integration/test_rsa_endpoints.py),
+   [`test_rsa_file_encrypt.py`](../../backend/tests/integration/test_rsa_file_encrypt.py),
+   [`test_rsa_validation.py`](../../backend/tests/unit/test_rsa_validation.py),
+   [`test_rsa.py`](../../backend/tests/unit/test_rsa.py) và các test history/guard liên quan.
 4. `/openapi.json` là projection machine-readable hữu ích, nhưng hiện under-describe
    một số runtime constraint như minimum/raw-digit cap của control integer và một số
    array cardinality. Không dùng điểm thiếu đó để nới contract.

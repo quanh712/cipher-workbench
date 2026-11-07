@@ -1,8 +1,11 @@
 # Cipher Workbench — Hệ mã hàng (Columnar Transposition)
 
+> Tài liệu theo đợt cũ được giữ để truy vết. Phạm vi FE/BE hiện tại xem
+> [COLUMNAR_CURRENT_SCOPE.md](COLUMNAR_CURRENT_SCOPE.md) và [phạm vi chung](COMMON_SCOPE.md).
+
 ## Trạng thái và nguồn có thẩm quyền
 
-Spec FE theo [GitHub Issue #1](https://github.com/quanh712/caesar-cipher-fe/issues/1). Phần contract dưới đây đã được đối chiếu với [consumer guide BE tại commit `c0a1927`](https://github.com/kiendt2312/caesar-cipher-be/blob/c0a1927b397926dbf89d62a4b0270d4ec0fb71d7/repo_docs/frontend-integration.md), OpenSpec, runtime và các vector test. BE `main` đã trỏ đến commit này khi nối API thật. Nếu BE đổi contract, đối chiếu lại với [`BACKEND_CONTRACT.md`](BACKEND_CONTRACT.md).
+Spec FE theo [GitHub Issue #1](https://github.com/quanh712/caesar-cipher-fe/issues/1). Phần contract dưới đây đã được đối chiếu với [consumer guide BE tại commit `c0a1927`](https://github.com/kiendt2312/caesar-cipher-be/blob/c0a1927b397926dbf89d62a4b0270d4ec0fb71d7/repo_docs/frontend-integration.md), OpenSpec, runtime và các vector test. BE `main` đã trỏ đến commit này khi nối API thật. Nếu BE đổi contract, đối chiếu lại với [`BACKEND_CONTRACT.md`](../frontend/BACKEND_CONTRACT.md).
 
 Hệ mã hàng khả dụng trong Workbench ở cả dev và production. Văn bản, file preview và file download đều gọi BE same-origin qua `/api/columnar/*`; FE không dùng mock làm fallback khi API lỗi.
 

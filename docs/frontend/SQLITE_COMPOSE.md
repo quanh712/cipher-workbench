@@ -158,7 +158,7 @@ Backup vẫn chạy khi Docker restart; lịch chỉ chạy khi Docker Desktop/E
 Chọn một thư mục `snapshot-*` đã có `evidence.json` verified. Giữ nguyên snapshot;
 restore vào file mới bằng `app.history.continuity restore`, dùng `manifest_digest`
 trong evidence và `--schema-revision sqlite_0001`. Verify trên file riêng trước
-khi dừng Backend và thay runtime. Xem [runbook BE](../../cipher-workbench-be/docs/sqlite-history-runbook.md).
+khi dừng Backend và thay runtime. Xem [runbook BE](../backend/sqlite-history-runbook.md).
 Không chạy destructive downgrade hoặc `down -v` trên volume có dữ liệu.
 
 ## Kiểm tra

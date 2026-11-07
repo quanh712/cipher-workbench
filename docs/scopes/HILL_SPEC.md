@@ -1,9 +1,12 @@
 # Cipher Workbench — Frontend Hill Cipher Specification
 
+> Tài liệu theo đợt cũ được giữ để truy vết. Phạm vi FE/BE hiện tại xem
+> [HILL_CURRENT_SCOPE.md](HILL_CURRENT_SCOPE.md) và [phạm vi chung](COMMON_SCOPE.md).
+
 ## 1. Trạng thái và nguồn có thẩm quyền
 
 Tài liệu này là **đặc tả để triển khai code Frontend** cho tab Hill trong Cipher Workbench. Nguồn
-yêu cầu sản phẩm là [Scope Frontend: Hệ mã hóa Hill](<../Scope Frontend_ Hệ mã hóa Hill.html>),
+yêu cầu sản phẩm là [Scope Frontend: Hệ mã hóa Hill](<Scope Frontend_ Hệ mã hóa Hill.html>),
 bao gồm các kịch bản UI01–UI13 và prototype minh họa. Prototype giúp đối chiếu tương tác và
 vector; mã JavaScript trong file HTML không được đưa vào runtime Frontend.
 
@@ -11,7 +14,7 @@ Cập nhật ngày 30/09/2026: API và thuật toán theo consumer guide, OpenSp
 ở revision [`4505ef7`](https://github.com/kiendt2312/cipher_workbench-be/blob/4505ef776d51d6657f26552531a9809e436318b9/repo_docs/frontend-integration.md).
 Contract chính thức dưới đây thay thế dự thảo API ban đầu. Giới hạn BE **5 MiB = 5.242.880 byte**
 cho text UTF-8/file Hill ghi đè giới hạn trong HTML nguồn. Quy tắc ưu tiên chung ở
-[`BACKEND_CONTRACT.md`](BACKEND_CONTRACT.md).
+[`BACKEND_CONTRACT.md`](../frontend/BACKEND_CONTRACT.md).
 
 FE có thể nối tab vào App và kiểm thử bằng API mock trong nhánh triển khai. Tab Hill chỉ xuất
 hiện trong **bản phát hành** khi bốn endpoint ở mục 7 hoạt động trên Backend thật, contract đã

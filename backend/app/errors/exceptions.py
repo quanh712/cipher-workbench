@@ -165,11 +165,6 @@ class FileReadError(AppError):
         super().__init__(500, messages.FILE_READ_FAILURE)
 
 
-class UnexpectedError(AppError):
-    def __init__(self) -> None:
-        super().__init__(500, messages.UNEXPECTED_FAILURE)
-
-
 class InvalidRequestBodyError(AppError):
     def __init__(self) -> None:
         super().__init__(422, messages.INVALID_REQUEST_BODY)

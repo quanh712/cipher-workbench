@@ -13,3 +13,6 @@ runtime and release process. Local Docker runs at http://127.0.0.1:18081 with
 Preserve legacy SQLite volumes, backups, and private environment files. Do not
 import server history into browser history automatically. Do not commit private
 configuration, database snapshots, generated outputs, or unrelated document drafts.
+
+Project documentation is centralized under `docs/`; start with `docs/README.md`.
+Current FE/BE algorithm scopes are indexed in `docs/scopes/README.md`.

@@ -24,11 +24,11 @@ quyết định bytes/BOM và tên attachment; với nguồn text, client có th
 chính `result` server trả về. Client chỉ nên kiểm tra sơ bộ để hỗ trợ trải nghiệm.
 
 Đội Frontend dùng
-[`repo_docs/frontend-integration.md`](repo_docs/frontend-integration.md) làm contract
+[`docs/contracts/frontend-integration.md`](../docs/contracts/frontend-integration.md) làm contract
 canonical cho các cipher cũ. Contract mới về chữ ký RSA và lịch sử riêng tư nằm tại
-[`docs/rsa-signatures-private-history.md`](docs/rsa-signatures-private-history.md).
-Các file [`repo_docs/rsa-frontend-contract.md`](repo_docs/rsa-frontend-contract.md) và
-[`repo_docs/dh-frontend-contract.md`](repo_docs/dh-frontend-contract.md) chỉ là
+[`docs/rsa-signatures-private-history.md`](../docs/backend/rsa-signatures-private-history.md).
+Các file [`docs/contracts/rsa-frontend-contract.md`](../docs/contracts/rsa-frontend-contract.md) và
+[`docs/contracts/dh-frontend-contract.md`](../docs/contracts/dh-frontend-contract.md) chỉ là
 supporting reference theo feature.
 
 ## 1. Tổng quan hành vi
@@ -259,7 +259,7 @@ RSA còn có bốn route chữ ký: `/api/rsa/sign/raw`, `/api/rsa/verify/raw`,
 `/api/rsa/sign`, `/api/rsa/verify`. Raw mode minh họa `m^d mod n`; standard mode dùng
 RSA-PSS/SHA-256 với PEM import và ký đúng UTF-8/original `.txt` bytes. Xem contract,
 examples và OpenSSL interop tại
-[`docs/rsa-signatures-private-history.md`](docs/rsa-signatures-private-history.md).
+[`docs/rsa-signatures-private-history.md`](../docs/backend/rsa-signatures-private-history.md).
 
 ### 2.8 Diffie–Hellman standalone và integration Caesar
 
@@ -279,7 +279,7 @@ xác thực public key. Trace lũy thừa modulo chạy từ bit trái sang ph�
 Primality 128-bit là Miller–Rabin xác suất, không phải proof deterministic và không
 tái dùng claim deterministic `<2^64` của RSA. Factorization tham số tùy ý có thể tốn
 tài nguyên dù đã bounded và chạy ngoài event loop; xem
-[`docs/dh-engineering-evidence.md`](docs/dh-engineering-evidence.md).
+[`docs/dh-engineering-evidence.md`](../docs/backend/dh-engineering-evidence.md).
 
 ## 3. API
 
@@ -568,7 +568,7 @@ Các nhóm status chính:
 
 Backend dừng ở lỗi đầu tiên theo validation precedence đã chốt. Ma trận message
 và thứ tự đầy đủ nằm trong OpenSpec và
-[`repo_docs/frontend-integration.md`](repo_docs/frontend-integration.md).
+[`docs/contracts/frontend-integration.md`](../docs/contracts/frontend-integration.md).
 
 Riêng Affine, text dùng thứ tự `body → text → a → b`; file dùng
 `multipart framing/exact fields → file → a → b → action → response_mode →
@@ -799,7 +799,7 @@ docker compose down        # giữ dữ liệu
 chỉ thay đổi qua migration SQLite riêng. Không dùng `docker compose down -v`: named
 volume là dữ liệu history, còn PostgreSQL legacy chỉ được retire theo checklist
 project-scoped sau backup/restore/reconciliation. Xem
-[`docs/sqlite-history-runbook.md`](docs/sqlite-history-runbook.md).
+[`docs/sqlite-history-runbook.md`](../docs/backend/sqlite-history-runbook.md).
 
 Bảng legacy `cipher_operations` chỉ còn chứa metadata chưa hết hạn từ trước migration
 và không được gán cho phiên mới. Bảng `private_history_records` chứa metadata có
@@ -942,7 +942,7 @@ bytes, encoding, BOM và attachment; error handlers dùng một envelope thống
 
 Backend cung cấp chín thuật toán: Caesar, Vigenère, Playfair, Affine, Columnar
 Transposition, Hill, DES, RSA và Diffie–Hellman. UI nằm tại `../frontend/`, tích hợp
-qua API; các contract chi tiết nằm trong `repo_docs/`.
+qua API; các contract chi tiết nằm trong [`../docs/contracts/`](../docs/contracts/).
 
 Ngoài phạm vi hiện tại:
 
@@ -984,15 +984,15 @@ thứ tự sau:
    cho Caesar và contract dùng chung.
 2. Runtime trong `app/`, các test contract và `/openapi.json` xác nhận cách đặc tả
    được hiện thực ở revision đang chạy.
-3. [Frontend integration guide](repo_docs/frontend-integration.md) diễn giải
+3. [Frontend integration guide](../docs/contracts/frontend-integration.md) diễn giải
    consumer contract chi tiết và phải được đồng bộ nếu lệch hai nguồn trên.
-4. [Bản scope Caesar bảo tồn](docs/reference/be-scope-v1.0.md) và các source DOCX
-   dùng để truy vết yêu cầu gốc. Với DES, `Scope Backend_ Hệ mã hóa DES.html` là nguồn
+4. [Bản scope Caesar bảo tồn](../docs/scopes/be-scope-v1.0.md) và các source DOCX
+   dùng để truy vết yêu cầu gốc. Với DES, [Scope Backend DES](<../docs/scopes/Scope Backend_ Hệ mã hóa DES.html>) là nguồn
    tham số, bảng lỗi/cảnh báo, API, test vector T01–T20 và tiêu chí nghiệm thu;
-   `Hệ mã hóa DES_ thuật toán và logic.html` là nguồn bảng hoán vị, hộp S, quy ước bit
+   [thuật toán DES (BE)](<../docs/scopes/backend-Hệ mã hóa DES_ thuật toán và logic.html>) là nguồn bảng hoán vị, hộp S, quy ước bit
    và giá trị trung gian. Cả hai bị các quyết định chủ sở hữu ngày 2026-10-01 ghi đè ở
    các điểm trong bảng dưới.
-5. `Caesar_Cipher_Tool_Demo.html` và `affine-cipher.html` chỉ là UI/algorithm
+5. [demo Caesar](../docs/scopes/Caesar_Cipher_Tool_Demo.html) và [demo Affine BE](../docs/scopes/backend-affine-cipher.html) chỉ là UI/algorithm
    reference; mock, client-side result/default, giới hạn 1 MB,
    filename dấu gạch dưới, host/cổng hard-code hoặc local cipher trong demo không
    ghi đè accepted behavior.

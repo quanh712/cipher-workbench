@@ -215,3 +215,74 @@ describe("RSA raw signature adapter", () => {
     await expect(rsaApi.signature(rawRequest, signal())).rejects.toThrow("Sai khóa <Backend>");
   });
 });
+
+describe("RSA block and file transport", () => {
+  it("exports block metadata and sends it back on decrypt", async () => {
+    const fetch = response({
+      success: true,
+      inputType: "text",
+      mode: "block",
+      blocks: ["50089"],
+      cipher: ["9007199254740993"],
+      blockSize: 2,
+      originalUtf8ByteLength: 2,
+      trace: trace("encrypt"),
+    });
+    const result = await rsaApi.transform(
+      { operation: "encrypt", inputType: "text", mode: "block", e: "17", n: "999999", data: "é" },
+      signal(),
+    );
+    expect(JSON.parse(result.output)).toEqual({
+      mode: "block",
+      cipher: ["9007199254740993"],
+      originalUtf8ByteLength: 2,
+    });
+    expect(payload(fetch).mode).toBe("block");
+    const decrypt = response({
+      success: true,
+      inputType: "text",
+      mode: "block",
+      blocks: ["50089"],
+      plaintext: "é",
+      blockSize: 2,
+      originalUtf8ByteLength: 2,
+      trace: trace("decrypt"),
+    });
+    expect(
+      (
+        await rsaApi.transform(
+          {
+            operation: "decrypt",
+            inputType: "text",
+            mode: "block",
+            d: "23",
+            n: "999999",
+            cipher: result.cipher,
+            originalUtf8ByteLength: 2,
+          },
+          signal(),
+        )
+      ).output,
+    ).toBe("é");
+    expect(payload(decrypt).originalUtf8ByteLength).toBe(2);
+  });
+  it("uploads file to multipart encrypt without forcing JSON headers", async () => {
+    const fetch = response({
+      success: true,
+      inputType: "text",
+      mode: "block",
+      blocks: ["65"],
+      cipher: ["42"],
+      blockSize: 1,
+      originalUtf8ByteLength: 1,
+      trace: trace("encrypt"),
+    });
+    const file = new File(["A"], "input.txt");
+    await rsaApi.encryptFile!({ file, mode: "block", e: "17", n: "3233" }, signal());
+    expect(fetch.mock.calls[0][0]).toBe("/api/rsa/encrypt");
+    const init = fetch.mock.calls[0][1];
+    expect(init.headers).toBeUndefined();
+    expect(init.body.get("file")).toBe(file);
+    expect(init.body.get("mode")).toBe("block");
+  });
+});

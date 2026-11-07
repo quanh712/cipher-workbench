@@ -46,6 +46,10 @@ export function parseRsaCipher(value: string, inputType: RsaInputType): string[]
 }
 
 export function useRsaCipher(gateway: RsaGateway | null, active: boolean) {
+  const [textMode, setTextModeState] = useState<"char" | "block">("char");
+  const [file, setFileState] = useState<File | null>(null);
+  const [textSource, setTextSourceState] = useState<"text" | "file">("text");
+  const [originalLength, setOriginalLengthState] = useState("");
   const [draft, setDraft] = useState(initialDraft);
   const [resetVersion, setResetVersion] = useState(0);
   const [key, setKey] = useState<RsaKeyResult | null>(null);
@@ -204,7 +208,34 @@ export function useRsaCipher(gateway: RsaGateway | null, active: boolean) {
           `Nhập n ≥ 2 và ${exponentField} ≥ 1 dưới dạng số thập phân (tối đa 128 chữ số).`,
         );
       const input = inputs[task][mode];
+      if (task === "text" && mode === "encrypt" && textSource === "file") {
+        if (!file || !/\.txt$/i.test(file.name) || !file.size || file.size > 1_000_000)
+          throw new RsaGatewayError(
+            "Chọn file .txt UTF-8, không rỗng, tối đa 1 MB và 10.000 ký tự.",
+          );
+        if (!gateway.encryptFile)
+          throw new RsaGatewayError("Kết nối hiện tại chưa hỗ trợ file RSA.");
+        void runTask(
+          task,
+          (signal) => gateway.encryptFile!({ file, e: exponent, n, mode: textMode }, signal),
+          (result) => setResults((previous) => ({ ...previous, text: result })),
+        );
+        return;
+      }
       let request: RsaTransformRequest;
+      let cipherInput = input;
+      let length = originalLength;
+      if (task === "text" && mode === "decrypt" && textMode === "block") {
+        try {
+          const envelope = JSON.parse(input);
+          if (envelope && !Array.isArray(envelope) && envelope.mode === "block") {
+            cipherInput = JSON.stringify(envelope.cipher);
+            length = String(envelope.originalUtf8ByteLength);
+          }
+        } catch {
+          throw new RsaGatewayError("Nhập mảng JSON bản mã hoặc JSON kết quả block hợp lệ.");
+        }
+      }
       if (mode === "encrypt") {
         if (!input.length) throw new RsaGatewayError("Nhập bản rõ trước khi xử lý.");
         const data = task === "number" ? decimal(input) : input;
@@ -217,8 +248,18 @@ export function useRsaCipher(gateway: RsaGateway | null, active: boolean) {
           inputType: task,
           n,
           d: exponent,
-          cipher: parseRsaCipher(input, task),
+          cipher: parseRsaCipher(cipherInput, task),
         };
+      if (task === "text" && textMode === "block") {
+        request.mode = "block";
+        if (mode === "decrypt") {
+          if (!/^\d+$/.test(length) || !Number.isSafeInteger(Number(length)) || Number(length) < 1)
+            throw new RsaGatewayError(
+              "Nhập độ dài UTF-8 gốc hợp lệ hoặc dán JSON kết quả có metadata.",
+            );
+          request.originalUtf8ByteLength = Number(length);
+        }
+      }
       void runTask(
         task,
         (signal) => gateway.transform(request, signal),
@@ -230,6 +271,10 @@ export function useRsaCipher(gateway: RsaGateway | null, active: boolean) {
     }
   }
   function resetAll() {
+    setTextModeState("char");
+    setFileState(null);
+    setTextSourceState("text");
+    setOriginalLengthState("");
     setResetVersion((previous) => previous + 1);
     clearResults();
     setDraft(initialDraft);
@@ -247,6 +292,26 @@ export function useRsaCipher(gateway: RsaGateway | null, active: boolean) {
     });
   }
   return {
+    textMode,
+    file,
+    textSource,
+    originalLength,
+    setTextMode: (value: "char" | "block") => {
+      clearTask("text");
+      setTextModeState(value);
+    },
+    setFile: (value: File | null) => {
+      clearTask("text");
+      setFileState(value);
+    },
+    setTextSource: (value: "text" | "file") => {
+      clearTask("text");
+      setTextSourceState(value);
+    },
+    setOriginalLength: (value: string) => {
+      clearTask("text");
+      setOriginalLengthState(value);
+    },
     gateway,
     active,
     resetVersion,
@@ -269,6 +334,10 @@ export function useRsaCipher(gateway: RsaGateway | null, active: boolean) {
     setManualKey,
     setMode,
     setInput,
+    setInputForMode: (task: RsaInputType, mode: RsaMode, value: string) => {
+      clearTask(task);
+      setInputs((previous) => ({ ...previous, [task]: { ...previous[task], [mode]: value } }));
+    },
     process,
     clearTask,
     resetAll,

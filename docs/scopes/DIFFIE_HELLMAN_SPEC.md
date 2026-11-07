@@ -1,6 +1,9 @@
 # Diffie–Hellman — contract tích hợp FE
 
-Cập nhật 2026-10-08. Nguồn canonical: [BE frontend-integration.md, mục 19](https://github.com/kiendt2312/cipher_workbench-be/blob/main/repo_docs/frontend-integration.md#19-exact-dh-wire-contract-và-migration-từ-fe-cũ-canonical). Tài liệu này thay thế spec FE cũ; implementation BE đã merge không chứng minh môi trường đang chạy đã deploy. Bộ API integration migration đã qua **43/43 tests** với BE thật source `main` `57d5766` trong Docker/SQLite cô lập; xem [bằng chứng](DIFFIE_HELLMAN_BE_INTEGRATION.md). Điều này không chứng minh một deployment khác đã cập nhật.
+> Tài liệu theo đợt cũ được giữ để truy vết. Phạm vi FE/BE hiện tại xem
+> [DIFFIE_HELLMAN_CURRENT_SCOPE.md](DIFFIE_HELLMAN_CURRENT_SCOPE.md) và [phạm vi chung](COMMON_SCOPE.md).
+
+Cập nhật 2026-10-08. Nguồn canonical: [BE frontend-integration.md, mục 19](https://github.com/kiendt2312/cipher_workbench-be/blob/main/repo_docs/frontend-integration.md#19-exact-dh-wire-contract-và-migration-từ-fe-cũ-canonical). Tài liệu này thay thế spec FE cũ; implementation BE đã merge không chứng minh môi trường đang chạy đã deploy. Bộ API integration migration đã qua **43/43 tests** với BE thật source `main` `57d5766` trong Docker/SQLite cô lập; xem [bằng chứng](../frontend/DIFFIE_HELLMAN_BE_INTEGRATION.md). Điều này không chứng minh một deployment khác đã cập nhật.
 
 ## Request và response
 
@@ -53,7 +56,7 @@ Contract hiện tại không có ECDH, KDF, xác thực MITM hay key storage. Kh
 
 Preset 23/5/6/15 cho public 8/19, shared 2/2; hoán đổi hai phía vẫn shared 2. Keypair private 11 với q23/alpha5 phải bị PRIVATE_KEY_WEAK. Shared-secret 353/97/248 cho 160; Caesar Hello World cho Lipps Asvph với shift 4.
 
-Chạy unit/component và HTTP mock theo README feature. Bộ API thật kiểm sáu endpoints, arithmetic traces, strict DTO/errors, JSON/multipart và safe metadata history: [hướng dẫn nghiệm thu](DIFFIE_HELLMAN_BE_INTEGRATION.md). Fixture/mock pass không thay thế nghiệm thu BE thật. Cờ deployment chỉ bật sau khi kiểm đúng BE revision của môi trường.
+Chạy unit/component và HTTP mock theo README feature. Bộ API thật kiểm sáu endpoints, arithmetic traces, strict DTO/errors, JSON/multipart và safe metadata history: [hướng dẫn nghiệm thu](../frontend/DIFFIE_HELLMAN_BE_INTEGRATION.md). Fixture/mock pass không thay thế nghiệm thu BE thật. Cờ deployment chỉ bật sau khi kiểm đúng BE revision của môi trường.
 
 ## UI thực hành đã chốt — 2026-10-09
 

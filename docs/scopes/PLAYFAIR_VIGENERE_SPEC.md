@@ -1,9 +1,13 @@
 # Cipher Workbench — Tích hợp Vigenère và Playfair
 
+> Tài liệu theo đợt cũ được giữ để truy vết. Phạm vi FE/BE hiện tại xem
+> [PLAYFAIR_CURRENT_SCOPE.md](PLAYFAIR_CURRENT_SCOPE.md) và [phạm vi chung](COMMON_SCOPE.md).
+> Vigenère có [scope riêng](VIGENERE_CURRENT_SCOPE.md).
+
 ## 1. Quyền ưu tiên
 
 Tài liệu này mô tả kế hoạch và trạng thái Frontend. Nó không định nghĩa lại API.
-Contract có thẩm quyền được ghim tại [`BACKEND_CONTRACT.md`](BACKEND_CONTRACT.md);
+Contract có thẩm quyền được ghim tại [`BACKEND_CONTRACT.md`](../frontend/BACKEND_CONTRACT.md);
 nếu có khác biệt, completed OpenSpec và runtime Backend được ưu tiên.
 
 Backend SQLite hiện hành được ghim tại `229c69d7c9af8413a780002b266bdb7651e79cb4`.

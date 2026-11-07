@@ -3,7 +3,7 @@
  *
  * Copy this file into the FE project. It only uses `fetch`, `FormData`, `Blob`
  * and `localStorage`, calls relative `/api/...` URLs (same origin or dev proxy)
- * and follows repo_docs/frontend-integration.md. Results always come from the server.
+ * and follows docs/contracts/frontend-integration.md at the monorepo root. Results always come from the server.
  */
 
 export type Cipher =

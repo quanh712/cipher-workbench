@@ -28,7 +28,7 @@ function setup(example = true) {
   );
   if (example) fireEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
   const number = within(screen.getByRole("region", { name: "Mã hóa và giải mã một khối số" }));
-  const text = within(screen.getByRole("region", { name: "Văn bản: mỗi ký tự là một khối" }));
+  const text = within(screen.getByRole("region", { name: "Văn bản và file: ký tự / block UTF-8" }));
   return { gateway, number, text };
 }
 function manual() {
@@ -43,7 +43,7 @@ describe("RSA independent operations", () => {
     setup(false);
     const panels = () => [
       within(screen.getByRole("region", { name: "Mã hóa và giải mã một khối số" })),
-      within(screen.getByRole("region", { name: "Văn bản: mỗi ký tự là một khối" })),
+      within(screen.getByRole("region", { name: "Văn bản và file: ký tự / block UTF-8" })),
     ];
     for (const panel of panels()) {
       expect(panel.getByText("Chưa có dữ liệu")).toHaveClass("status");
@@ -73,14 +73,14 @@ describe("RSA independent operations", () => {
   it("never auto-runs, including examples, presets and StrictMode mounting", async () => {
     const { gateway } = setup(false);
     let number = within(screen.getByRole("region", { name: "Mã hóa và giải mã một khối số" }));
-    let text = within(screen.getByRole("region", { name: "Văn bản: mỗi ký tự là một khối" }));
+    let text = within(screen.getByRole("region", { name: "Văn bản và file: ký tự / block UTF-8" }));
     for (const name of ["p · số nguyên tố", "q · số nguyên tố", "e · số mũ công khai"])
       expect(screen.getByRole("textbox", { name })).toHaveValue("");
     expect(number.getByRole("textbox", { name: "Bản rõ P (số)" })).toHaveValue("");
     expect(text.getByRole("textbox", { name: "Thông điệp" })).toHaveValue("");
     fireEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
     number = within(screen.getByRole("region", { name: "Mã hóa và giải mã một khối số" }));
-    text = within(screen.getByRole("region", { name: "Văn bản: mỗi ký tự là một khối" }));
+    text = within(screen.getByRole("region", { name: "Văn bản và file: ký tự / block UTF-8" }));
     expect(screen.getByRole("textbox", { name: "p · số nguyên tố" })).toHaveValue("17");
     expect(screen.getByRole("textbox", { name: "q · số nguyên tố" })).toHaveValue("11");
     expect(screen.getByRole("textbox", { name: "e · số mũ công khai" })).toHaveValue("7");
@@ -265,4 +265,32 @@ it("validates ciphertext without converting large integers to numbers", () => {
   expect(parseRsaCipher('["9007199254740993"]', "number")).toEqual(["9007199254740993"]);
   for (const value of ["[]", "[11]", '["-1"]', '["1.5"]', "{}", '"11"', '["1","2"]'])
     expect(() => parseRsaCipher(value, "number")).toThrow();
+});
+
+it("decrypts a block envelope with its original UTF-8 length", async () => {
+  const { gateway, text } = setup(false);
+  manual();
+  fireEvent.change(screen.getByRole("textbox", { name: "d · khóa riêng" }), {
+    target: { value: "23" },
+  });
+  fireEvent.change(screen.getByLabelText("Cách chia khối"), { target: { value: "block" } });
+  fireEvent.click(text.getByRole("radio", { name: /Giải mã/ }));
+  fireEvent.change(text.getByRole("textbox", { name: "Bản mã (JSON)" }), {
+    target: { value: '{"mode":"block","cipher":["9007199254740993"],"originalUtf8ByteLength":2}' },
+  });
+  fireEvent.click(text.getByRole("button", { name: "Giải mã" }));
+  await waitFor(() =>
+    expect(gateway.transform).toHaveBeenCalledWith(
+      {
+        operation: "decrypt",
+        inputType: "text",
+        mode: "block",
+        n: "187",
+        d: "23",
+        cipher: ["9007199254740993"],
+        originalUtf8ByteLength: 2,
+      },
+      expect.any(AbortSignal),
+    ),
+  );
 });

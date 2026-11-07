@@ -80,6 +80,12 @@ is defined in [`styles.css`](frontend/src/app/styles.css). The browser tab uses
 the static [`favicon.svg`](frontend/public/favicon.svg), declared in
 [`index.html`](frontend/index.html). Vite copies that public asset into the build.
 
+## Algorithm scopes and specifications
+
+All algorithm scopes, frontend specifications, and reference demos are indexed in
+[docs/scopes/README.md](docs/scopes/README.md).
+The complete documentation index is [docs/README.md](docs/README.md).
+
 ## Checks
 
 Run frontend checks from `frontend/`:

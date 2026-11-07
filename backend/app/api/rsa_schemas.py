@@ -310,17 +310,6 @@ def _text_data(payload: dict[str, Any], field: str = "data") -> str:
     return value
 
 
-def _cipher_values(payload: dict[str, Any], limit: int) -> tuple[int, ...]:
-    value = payload.get("cipher", MISSING)
-    if type(value) is not list:
-        raise _invalid("cipher")
-    if not value:
-        raise error(422, "EMPTY_INPUT", messages.RSA_EMPTY_INPUT, "cipher")
-    if len(value) > limit:
-        raise error(422, "INPUT_TOO_LARGE", messages.RSA_COLLECTION_TOO_LARGE, "cipher")
-    return tuple(parse_decimal(item, f"cipher[{index}]") for index, item in enumerate(value))
-
-
 def validate_encrypt(payload: dict[str, Any]) -> NumberEncryptRequest | TextEncryptRequest:
     input_type = _input_type(payload)
     if input_type == "number":

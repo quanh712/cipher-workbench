@@ -878,7 +878,7 @@ const decrypted = await postRsaJson<TextDecryptResponse>("/api/rsa/decrypt", {
 ```
 
 `postRsaJson` là ví dụ cục bộ trong tài liệu này, không phải export hiện có của
-[`examples/cipher-api.ts`](examples/cipher-api.ts). Khi đưa vào FE thật, giữ request
+[`examples/cipher-api.ts`](../../backend/repo_docs/examples/cipher-api.ts). Khi đưa vào FE thật, giữ request
 object riêng theo từng union variant để tránh spread field thừa.
 
 ## 13. History, privacy và statelessness
@@ -959,20 +959,20 @@ chỉ hiển thị plaintext quan sát được cùng cảnh báo textbook RSA.
 Authority của contract này theo thứ tự:
 
 1. Accepted OpenSpec change Q1–Q16 và hai làm rõ corrective R1–R2 tại
-   [`openspec/changes/archive/2026-11-03-add-rsa-cipher/`](../openspec/changes/archive/2026-11-03-add-rsa-cipher/), trong đó
+   [`openspec/changes/archive/2026-11-03-add-rsa-cipher/`](../../backend/openspec/changes/archive/2026-11-03-add-rsa-cipher), trong đó
    Q16 thay thế riêng quyết định “no history” cho safe transform metadata; R1–R2 chỉ
    reconcile hai error edge nêu tại mục 11.1.
 2. Runtime/schema/error mapping hiện tại:
-   [`routes_rsa.py`](../app/api/routes_rsa.py),
-   [`rsa_schemas.py`](../app/api/rsa_schemas.py),
-   [`rsa.py`](../app/core/rsa.py),
-   [`handlers.py`](../app/errors/handlers.py) và
-   [`messages.py`](../app/errors/messages.py).
+   [`routes_rsa.py`](../../backend/app/api/routes_rsa.py),
+   [`rsa_schemas.py`](../../backend/app/api/rsa_schemas.py),
+   [`rsa.py`](../../backend/app/core/rsa.py),
+   [`handlers.py`](../../backend/app/errors/handlers.py) và
+   [`messages.py`](../../backend/app/errors/messages.py).
 3. Contract tests:
-   [`test_rsa_endpoints.py`](../tests/integration/test_rsa_endpoints.py),
-   [`test_rsa_file_encrypt.py`](../tests/integration/test_rsa_file_encrypt.py),
-   [`test_rsa_validation.py`](../tests/unit/test_rsa_validation.py),
-   [`test_rsa.py`](../tests/unit/test_rsa.py) và các test history/guard liên quan.
+   [`test_rsa_endpoints.py`](../../backend/tests/integration/test_rsa_endpoints.py),
+   [`test_rsa_file_encrypt.py`](../../backend/tests/integration/test_rsa_file_encrypt.py),
+   [`test_rsa_validation.py`](../../backend/tests/unit/test_rsa_validation.py),
+   [`test_rsa.py`](../../backend/tests/unit/test_rsa.py) và các test history/guard liên quan.
 4. `/openapi.json` là projection machine-readable hữu ích, nhưng hiện under-describe
    một số runtime constraint như minimum/raw-digit cap của control integer và một số
    array cardinality. Không dùng điểm thiếu đó để nới contract.

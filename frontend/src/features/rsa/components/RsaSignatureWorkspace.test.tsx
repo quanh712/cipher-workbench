@@ -17,7 +17,7 @@ function setup() {
       <Fixture />
     </StrictMode>,
   );
-  fireEvent.click(screen.getByRole("tab", { name: "Chữ ký số" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Chữ ký số nguyên" }));
   return { generateKey, transform };
 }
 
@@ -33,9 +33,9 @@ describe("RSA signature workspace", () => {
     expect(screen.getByText("Ký thành công.")).toBeVisible();
     const n = screen.getByRole("textbox", { name: "n · modulo" });
     const value = (n as HTMLInputElement).value;
-    fireEvent.click(screen.getByRole("tab", { name: "Mã hóa" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Mã hóa / Giải mã" }));
     expect(screen.getByRole("textbox", { name: "n · modulo" })).toHaveValue(value);
-    fireEvent.click(screen.getByRole("tab", { name: "Chữ ký số" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Chữ ký số nguyên" }));
     expect(screen.getByText("Đã ký", { exact: true })).toBeVisible();
     expect(generateKey).not.toHaveBeenCalled();
     expect(transform).not.toHaveBeenCalled();
@@ -105,7 +105,7 @@ describe("RSA signature workspace", () => {
     expect(screen.queryByText("Đã ký", { exact: true })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ký" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Đặt lại" }));
-    fireEvent.click(screen.getByRole("tab", { name: "Chữ ký số" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Chữ ký số nguyên" }));
     expect(screen.getByRole("textbox", { name: "Thông điệp gốc m (số)" })).toHaveValue("");
     expect(screen.getByRole("button", { name: "Ký" })).toBeDisabled();
   });

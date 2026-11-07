@@ -1,6 +1,6 @@
 # Diffie–Hellman workspace
 
-Contract canonical: [BE frontend-integration.md mục 19](https://github.com/kiendt2312/cipher_workbench-be/blob/main/repo_docs/frontend-integration.md#19-exact-dh-wire-contract-và-migration-từ-fe-cũ-canonical). [Spec FE](../../../docs/DIFFIE_HELLMAN_SPEC.md) ghi request/response, limits, warning và privacy mới. Contract này thay thế DTO/trace cũ.
+Contract canonical: [BE frontend-integration.md mục 19](https://github.com/kiendt2312/cipher_workbench-be/blob/main/repo_docs/frontend-integration.md#19-exact-dh-wire-contract-và-migration-từ-fe-cũ-canonical). [Spec FE](../../../../docs/scopes/DIFFIE_HELLMAN_SPEC.md) ghi request/response, limits, warning và privacy mới. Contract này thay thế DTO/trace cũ.
 
 HTTP adapter gọi URL tương đối `/api/dh/*` bằng camelCase, giữ mọi crypto integer dưới dạng decimal string. Optional request fields được bỏ hẳn, không gửi null. Sáu endpoints: params, params/random, keypair, shared-secret, exchange, caesar. Omit private key khi cần BE sinh; không có endpoint sinh private-values riêng. Exchange luôn có grouped steps và warning giáo dục, không nhận cờ trace hay trả q/alpha.
 
@@ -21,6 +21,6 @@ npm run test:integration:diffie-hellman -- --list
 DH_BACKEND_URL=http://127.0.0.1:18082 npm run test:integration:diffie-hellman
 ```
 
-Gateway fixtures chỉ dùng unit/component và E2E test; HTTP app tests dùng adapter thật với mock transport; không nhóm nào chứng minh BE thật tương thích. Trạng thái/bằng chứng live acceptance: [hướng dẫn integration](../../../docs/DIFFIE_HELLMAN_BE_INTEGRATION.md). Không suy ra kết quả migration từ các số test pass của bản contract cũ.
+Gateway fixtures chỉ dùng unit/component và E2E test; HTTP app tests dùng adapter thật với mock transport; không nhóm nào chứng minh BE thật tương thích. Trạng thái/bằng chứng live acceptance: [hướng dẫn integration](../../../../docs/frontend/DIFFIE_HELLMAN_BE_INTEGRATION.md). Không suy ra kết quả migration từ các số test pass của bản contract cũ.
 
 Migration đã qua 43/43 API integration tests với BE thật trong môi trường cô lập; bằng chứng version/lệnh nằm tại tài liệu integration. HTTP browser mock đã qua 24/24 ca trong ma trận desktop/375 px và light/dark.

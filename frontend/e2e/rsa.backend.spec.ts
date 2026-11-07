@@ -65,7 +65,7 @@ test("manual half-keys, Unicode JSON roundtrip, download and independent modes",
   await page.getByRole("button", { name: "Nhập khóa", exact: true }).click();
   await page.getByRole("textbox", { name: "n · modulo" }).fill("1022117");
   await page.getByRole("textbox", { name: "e · khóa công khai" }).fill("17");
-  const text = page.getByRole("region", { name: "Văn bản: mỗi ký tự là một khối" });
+  const text = page.getByRole("region", { name: "Văn bản và file: ký tự / block UTF-8" });
   const message = "Tiếng Việt 😀<&\n";
   await text.getByRole("textbox", { name: "Thông điệp" }).fill(message);
   await text.getByRole("button", { name: "Mã hóa", exact: true }).click();
@@ -117,14 +117,14 @@ test("Backend errors, input validation and reset remain usable", async ({ page }
   await page.getByRole("button", { name: "Tạo ví dụ" }).click();
   await page.getByRole("button", { name: "Tạo khóa", exact: true }).click();
   await expect(page.getByText("{7, 187}", { exact: true })).toBeVisible();
-  const text = page.getByRole("region", { name: "Văn bản: mỗi ký tự là một khối" });
+  const text = page.getByRole("region", { name: "Văn bản và file: ký tự / block UTF-8" });
   await text.getByRole("textbox", { name: "Thông điệp" }).fill("à");
   await text.getByRole("button", { name: "Mã hóa", exact: true }).click();
   await expect(text.getByRole("alert")).toContainText("P = 224 ≥ n = 187");
   await page.getByRole("textbox", { name: "p · số nguyên tố" }).fill("15");
   await page.getByRole("button", { name: "Tạo khóa", exact: true }).click();
   await expect(page.getByRole("alert")).toHaveText("p = 15 không phải số nguyên tố.");
-  await page.getByRole("button", { name: "Đặt lại" }).click();
+  await page.getByRole("button", { name: "Đặt lại", exact: true }).click();
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(text.getByRole("textbox", { name: "Thông điệp" })).toHaveValue("");
   await expect(text.getByRole("button", { name: "Mã hóa", exact: true })).toBeDisabled();
@@ -138,7 +138,7 @@ test("backend signs arbitrary numbers and verifies valid/invalid signatures with
     if (/\/api\/rsa\/(sign|verify)\/raw$/.test(request.url()))
       requests.push({ url: request.url(), payload: request.postDataJSON() });
   });
-  await page.getByRole("tab", { name: "Chữ ký số" }).click();
+  await page.getByRole("tab", { name: "Chữ ký số nguyên" }).click();
   await page.getByRole("button", { name: "Tạo ví dụ" }).click();
   expect(requests).toHaveLength(0);
   await page.getByRole("textbox", { name: "n · modulo" }).fill("3233");
@@ -179,7 +179,7 @@ test("backend signs arbitrary numbers and verifies valid/invalid signatures with
 });
 
 test("signature service failure clears results and permits retry", async ({ page }) => {
-  await page.getByRole("tab", { name: "Chữ ký số" }).click();
+  await page.getByRole("tab", { name: "Chữ ký số nguyên" }).click();
   await page.getByRole("button", { name: "Tạo ví dụ" }).click();
   await page.route("**/api/rsa/sign/raw", (route) => route.abort(), { times: 1 });
   await page.getByRole("button", { name: "Ký", exact: true }).click();
@@ -188,7 +188,7 @@ test("signature service failure clears results and permits retry", async ({ page
   ).toBeVisible();
   await page.getByRole("button", { name: "Ký", exact: true }).click();
   await expect(page.getByText("Đã ký", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Đặt lại" }).click();
+  await page.getByRole("button", { name: "Đặt lại", exact: true }).click();
   await expect(page.getByRole("textbox", { name: "Thông điệp gốc m (số)" })).toHaveValue("");
   await expect(page.getByText("Đã ký", { exact: true })).toHaveCount(0);
 });
@@ -198,7 +198,7 @@ test("private signature history survives reload, reuses without submitting, dele
   browser,
   baseURL,
 }) => {
-  await page.getByRole("tab", { name: "Chữ ký số" }).click();
+  await page.getByRole("tab", { name: "Chữ ký số nguyên" }).click();
   await page.getByRole("button", { name: "Tạo ví dụ" }).click();
   const responsePromise = page.waitForResponse(/\/api\/rsa\/sign\/raw$/);
   await page.getByRole("button", { name: "Ký", exact: true }).click();
@@ -268,7 +268,7 @@ test("private signature history survives reload, reuses without submitting, dele
 });
 
 test("verification history retains valid and invalid outcomes after reload", async ({ page }) => {
-  await page.getByRole("tab", { name: "Chữ ký số" }).click();
+  await page.getByRole("tab", { name: "Chữ ký số nguyên" }).click();
   await page.getByRole("radio", { name: /Kiểm tra/ }).click();
   await page.getByRole("button", { name: "Tạo ví dụ" }).click();
   await page.getByRole("textbox", { name: "d · khóa riêng" }).fill("");
@@ -330,7 +330,7 @@ test("verification history retains valid and invalid outcomes after reload", asy
 });
 
 test("history source failures keep the other source visible and permit retry", async ({ page }) => {
-  await page.getByRole("tab", { name: "Chữ ký số" }).click();
+  await page.getByRole("tab", { name: "Chữ ký số nguyên" }).click();
   await page.getByRole("button", { name: "Tạo ví dụ" }).click();
   await page.getByRole("button", { name: "Ký", exact: true }).click();
   await expect(page.getByText("Đã ký", { exact: true })).toBeVisible();
@@ -354,4 +354,66 @@ test("history source failures keep the other source visible and permit retry", a
   await page.getByRole("button", { name: "Làm mới lịch sử" }).click();
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Xem chi tiết" })).toBeVisible();
+});
+
+test("UTF-8 block file roundtrip preserves metadata and plaintext", async ({ page }) => {
+  await page.getByRole("textbox", { name: "p · số nguyên tố" }).fill("1009");
+  await page.getByRole("textbox", { name: "q · số nguyên tố" }).fill("1013");
+  await page.getByRole("textbox", { name: "e · số mũ công khai" }).fill("17");
+  await page.getByRole("button", { name: "Tạo khóa", exact: true }).click();
+  await expect(page.getByText("{17, 1022117}", { exact: true })).toBeVisible();
+  await page.getByLabel("Cách chia khối").selectOption("block");
+  await page.getByLabel("Đầu vào văn bản").selectOption("file");
+  const message = "Tiếng Việt 😀\r\n\u0000";
+  await page
+    .getByLabel(/File mã hóa/)
+    .setInputFiles({ name: "message.txt", mimeType: "text/plain", buffer: Buffer.from(message) });
+  const text = page.getByRole("region", { name: "Văn bản và file: ký tự / block UTF-8" });
+  await text.getByRole("button", { name: "Mã hóa", exact: true }).click();
+  const output = text.getByRole("textbox", { name: "Kết quả bản mã (JSON)" });
+  await expect(output).not.toHaveValue("");
+  const envelope = JSON.parse(await output.inputValue());
+  expect(envelope.originalUtf8ByteLength).toBe(Buffer.byteLength(message));
+  expect(envelope.mode).toBe("block");
+  await text.getByRole("button", { name: "Dùng bản mã để giải mã" }).click();
+  await text.getByRole("button", { name: "Giải mã", exact: true }).click();
+  await expect(text.getByRole("textbox", { name: "Kết quả bản rõ" })).toHaveValue(
+    message.replace(/\r\n/g, "\n"),
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("PEM signs original file bytes, verifies and rejects tampering", async ({ page }) => {
+  const { generateKeyPairSync, createHash } = await import("node:crypto");
+  const keys = generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    publicKeyEncoding: { type: "spki", format: "pem" },
+    privateKeyEncoding: { type: "pkcs8", format: "pem" },
+  });
+  await page.getByRole("tab", { name: "Chữ ký PEM", exact: true }).click();
+  await page.getByLabel("Nguồn nội dung").selectOption("file");
+  const bytes = Buffer.from("\ufeffTiếng Việt 😀\r\n");
+  await page
+    .getByLabel(/File ký/)
+    .setInputFiles({ name: "signed.txt", mimeType: "text/plain", buffer: bytes });
+  await page.getByLabel("Private key PEM", { exact: true }).fill(keys.privateKey);
+  await page.getByRole("button", { name: "Ký PEM", exact: true }).click();
+  await expect(page.getByText("Ký PEM thành công.", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(createHash("sha256").update(bytes).digest("hex"), { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Private key PEM", { exact: true })).toHaveValue("");
+  await page.getByRole("button", { name: "Dùng để kiểm tra" }).click();
+  await page.getByRole("button", { name: "Kiểm tra PEM", exact: true }).click();
+  await expect(page.getByText("Chữ ký hợp lệ.", { exact: true })).toBeVisible();
+  await page
+    .getByLabel(/File ký/)
+    .setInputFiles({ name: "changed.txt", mimeType: "text/plain", buffer: Buffer.from("changed") });
+  await page.getByRole("button", { name: "Kiểm tra PEM", exact: true }).click();
+  await expect(page.getByText(/Chữ ký không hợp lệ:/)).toBeVisible();
+  const persisted = await page.evaluate(() => JSON.stringify(localStorage));
+  expect(persisted).not.toContain(keys.privateKey);
+  expect(persisted).not.toContain("Tiếng Việt");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath("rsa-pem.png"), fullPage: true });
 });

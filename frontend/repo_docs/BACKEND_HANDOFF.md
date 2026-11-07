@@ -7,7 +7,7 @@ Backend contract cho Caesar, Vigenère và Playfair đã accepted.
 
 Nguồn tích hợp hiện tại:
 
-- Tóm tắt và phiên bản ghim phía FE: [`../docs/BACKEND_CONTRACT.md`](../docs/BACKEND_CONTRACT.md)
+- Tóm tắt và phiên bản ghim phía FE: [`../docs/BACKEND_CONTRACT.md`](../../docs/frontend/BACKEND_CONTRACT.md)
 - Handoff Backend tại guide commit `82c09f4`:
   <https://github.com/kiendt2312/caesar-cipher-be/blob/82c09f45c9c9c860850556de94c822554062dfc9/repo_docs/frontend-integration.md>
 - OpenSpec trong repo Backend là nguồn có thẩm quyền cao nhất.
@@ -18,7 +18,7 @@ OpenSpec Backend trước, sau đó mới cập nhật reference phía FE.
 ## Runtime/deployment handoff
 
 Cập nhật ngày `2026-10-08`: cấu hình runtime hiện hành nằm ở
-[SQLite operation](../docs/SQLITE_COMPOSE.md) và [deployment](../docs/DEPLOYMENT.md).
+[SQLite operation](../../docs/frontend/SQLITE_COMPOSE.md) và [deployment](../../docs/frontend/DEPLOYMENT.md).
 Handoff LAN ngày 18/09/2026 đã được thay thế; không chạy lại Compose với `.env.deploy`
 hoặc build BE chỉ để cập nhật FE.
 

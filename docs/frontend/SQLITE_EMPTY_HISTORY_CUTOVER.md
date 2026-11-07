@@ -83,6 +83,6 @@ Trước write SQLite đầu tiên: dừng project mới, giải phóng `18081`,
 Sau write SQLite mới: giữ backup và dữ liệu SQLite, xác định phần metadata mới và
 phương án xử lý trước rollback; quay về PostgreSQL sẽ không có history mới đó.
 Không tự ghi ngược, transfer hoặc xóa dữ liệu. Xem
-[runbook BE](../../cipher-workbench-be/docs/sqlite-history-runbook.md).
+[runbook BE](../backend/sqlite-history-runbook.md).
 
 Không retire PostgreSQL trong phạm vi này. Không dùng `down -v`.

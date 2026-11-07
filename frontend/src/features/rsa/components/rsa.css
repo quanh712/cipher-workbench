@@ -175,19 +175,6 @@
   width: 100%;
 }
 
-.rsa__action-line {
-  display: flex;
-  align-items: end;
-  flex-wrap: wrap;
-  gap: 12px;
-  width: 100%;
-}
-
-.rsa__action-line .rsa__field {
-  flex: 1 1 180px;
-  max-width: 320px;
-}
-
 .rsa__message {
   margin: 0;
   padding: 10px 12px;
@@ -196,15 +183,6 @@
   color: var(--muted);
   line-height: 1.5;
   overflow-wrap: anywhere;
-}
-
-.rsa__message--pending {
-  border: 1px dashed var(--control-border);
-}
-
-.rsa__message--success {
-  background: var(--success-surface);
-  color: var(--success);
 }
 
 .rsa__message--error {
@@ -218,10 +196,6 @@
   gap: 10px;
   width: 100%;
   margin: 2px 0 0;
-}
-
-.rsa__facts--three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .rsa__facts div {
@@ -244,14 +218,6 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 16px;
   font-weight: 650;
-}
-
-.rsa__facts .rsa__fact--public {
-  border-left: 3px solid var(--focus);
-}
-
-.rsa__facts .rsa__fact--private {
-  border-left: 3px solid var(--accent);
 }
 
 .rsa__details {
@@ -328,10 +294,6 @@
   background: var(--success-surface);
 }
 
-.rsa__table-row--error {
-  background: var(--danger-surface);
-}
-
 .rsa__explanation {
   margin-top: 18px;
   display: grid;
@@ -386,11 +348,9 @@
     display: grid;
     gap: 10px;
   }
-
   .rsa__flow,
   .rsa__fields,
   .rsa__facts,
-  .rsa__facts--three,
   .rsa__explanation {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -471,9 +431,7 @@
   border-bottom-color: var(--accent);
   color: var(--text);
 }
-
-.rsa__tabs button:focus-visible,
-.rsa__signature-modes button:focus-visible {
+.rsa__tabs button:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
@@ -526,12 +484,6 @@
 .rsa__signature-result .rsa__message strong,
 .rsa__signature-result .rsa__message span {
   display: block;
-}
-
-.rsa__message--invalid {
-  border-left: 3px solid var(--accent);
-  background: var(--surface);
-  color: var(--text);
 }
 
 .rsa__signature-steps {
@@ -634,4 +586,22 @@
   .rsa__toolbar > .rsa__tabs {
     width: 100%;
   }
+}
+
+.rsa__field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+}
+.rsa__field select:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.rsa__digest {
+  overflow-wrap: anywhere;
 }

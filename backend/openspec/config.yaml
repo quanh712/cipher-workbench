@@ -2,8 +2,9 @@ schema: spec-driven
 
 context: |
   Dự án: Caesar Cipher Web App - Tuần 1 MVP (học tập, minh họa thuật toán).
-  Tài liệu gốc (source of truth): "BE Scope – Week 1 Caesar Cipher MVP.docx" v1.0 (đã thống nhất).
-  Mockup giao diện: Caesar_Cipher_Tool_Demo.html (tham chiếu hành vi UI, KHÔNG phải source of truth
+  Mục lục scope/spec: ../docs/scopes/README.md (đường dẫn tính từ backend/).
+  Tài liệu gốc (source of truth): "../docs/scopes/BE Scope – Week 1 Caesar Cipher MVP.docx" v1.0 (đã thống nhất).
+  Mockup giao diện: ../docs/scopes/Caesar_Cipher_Tool_Demo.html (tham chiếu hành vi UI, KHÔNG phải source of truth
   cho giới hạn/thông báo lỗi - khi mâu thuẫn thì theo docx).
 
   Tech stack (đã chốt):

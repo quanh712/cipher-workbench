@@ -1,7 +1,7 @@
 # Biên bản nghiệm thu Week 1 MVP
 
 Đối chiếu ngày 2026-09-16 với mục §7 của
-`BE Scope – Week 1 Caesar Cipher MVP.docx` (nguồn sự thật).
+[scope Caesar BE](<../scopes/BE Scope – Week 1 Caesar Cipher MVP.docx>) (nguồn sự thật).
 
 - [x] **Mã hóa văn bản:** `Hello World`, khóa `3` trả `Khoor Zruog` qua
   `POST /api/caesar/encrypt`.

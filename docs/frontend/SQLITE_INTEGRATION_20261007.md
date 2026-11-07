@@ -68,7 +68,7 @@ restart hoặc retire tài nguyên cũ.
 
 Muốn giữ history cũ khi rollout: BE cần freeze writer nguồn, backup/restore thử,
 transfer vào SQLite staging, đối soát ID/count/sequence/UTC/digest và publish theo
-[runbook](../../cipher-workbench-be/docs/sqlite-history-runbook.md) trước cutover.
+[runbook](../backend/sqlite-history-runbook.md) trước cutover.
 Kết quả integration trên volume mới không thay thế bước transfer hoặc đối soát
 PostgreSQL thực tế. Backup/restore production và rollout cổng `18081` chưa thực hiện.
 

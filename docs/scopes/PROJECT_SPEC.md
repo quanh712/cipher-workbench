@@ -1,5 +1,8 @@
 # Cipher Workbench — Frontend Week 1 Specification
 
+> Tài liệu theo đợt cũ được giữ để truy vết. Phạm vi FE/BE hiện tại xem
+> [CAESAR_CURRENT_SCOPE.md](CAESAR_CURRENT_SCOPE.md) và [phạm vi chung](COMMON_SCOPE.md).
+
 ## 1. Phạm vi
 
 Frontend Week 1 chỉ hỗ trợ Caesar Cipher với hai chế độ mã hóa/giải mã và hai nguồn
@@ -7,7 +10,7 @@ Frontend Week 1 chỉ hỗ trợ Caesar Cipher với hai chế độ mã hóa/gi
 database và các cipher động nằm ngoài phạm vi.
 
 Contract tích hợp không được định nghĩa lại trong tài liệu này. Nguồn có thẩm quyền
-được ghim tại [`BACKEND_CONTRACT.md`](BACKEND_CONTRACT.md).
+được ghim tại [`BACKEND_CONTRACT.md`](../frontend/BACKEND_CONTRACT.md).
 
 ## 2. UI bắt buộc
 

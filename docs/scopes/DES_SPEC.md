@@ -1,5 +1,8 @@
 # Cipher Workbench — Frontend DES Specification
 
+> Tài liệu theo đợt cũ được giữ để truy vết. Phạm vi FE/BE hiện tại xem
+> [DES_CURRENT_SCOPE.md](DES_CURRENT_SCOPE.md) và [phạm vi chung](COMMON_SCOPE.md).
+
 ## 1. Trạng thái và nguồn có thẩm quyền
 
 Cập nhật 01/10/2026: FE đã chuyển từ mốc A demo sang **mốc B tích hợp API DES thật**.
@@ -7,8 +10,8 @@ Contract được ghim tại BE revision
 [`31438eb49c94cdef570b3ca5afd2c2fff9e73501`](https://github.com/kiendt2312/cipher_workbench-be/blob/31438eb49c94cdef570b3ca5afd2c2fff9e73501/repo_docs/frontend-integration.md),
 nhánh `docs/des-fe-guide`, mục 4.7, 8, 9.2. Đã đối chiếu `des-text-cipher-api`,
 `des-file-cipher-api` và implementation trong cùng checkout BE. Nguồn FE là
-[DES_Frontend_Scope.html](../DES_Frontend_Scope.html) và
-[tài liệu thuật toán](<../Hệ mã hóa DES_ thuật toán và logic.html>).
+[DES_Frontend_Scope.html](DES_Frontend_Scope.html) và
+[tài liệu thuật toán](<frontend-Hệ mã hóa DES_ thuật toán và logic.html>).
 
 Contract này thay thế các endpoint/DTO dự thảo và quyết định validation/file tạm thời của
 mốc A. Backend là nguồn kết quả và validation cuối cùng. GitHub Issues vẫn là issue tracker

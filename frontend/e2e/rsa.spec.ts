@@ -51,16 +51,16 @@ test("keyboard modes, explicit errors and retry", async ({ page }) => {
   );
   await expect(
     page
-      .getByRole("region", { name: "Văn bản: mỗi ký tự là một khối" })
+      .getByRole("region", { name: "Văn bản và file: ký tự / block UTF-8" })
       .getByRole("radio", { name: /Mã hóa/ }),
   ).toHaveAttribute("aria-checked", "true");
 });
 
 test("signature gateway, keyboard tabs and edited inputs at every viewport", async ({ page }) => {
   await page.goto(fixture);
-  await page.getByRole("tab", { name: "Mã hóa", exact: true }).focus();
+  await page.getByRole("tab", { name: "Mã hóa / Giải mã", exact: true }).focus();
   await page.keyboard.press("ArrowRight");
-  await expect(page.getByRole("tab", { name: "Chữ ký số" })).toBeFocused();
+  await expect(page.getByRole("tab", { name: "Chữ ký số nguyên" })).toBeFocused();
   await expect(page.getByText("RSA học thuật", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Tạo ví dụ" }).click();
   await page.getByRole("button", { name: "Ký", exact: true }).click();

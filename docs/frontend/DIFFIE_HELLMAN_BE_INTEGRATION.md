@@ -1,6 +1,6 @@
 # Nghiệm thu Diffie–Hellman với BE thật
 
-Bằng chứng migration contract 2026-10-08 (trước khi BE mở rộng lịch sử): **43/43 API tests qua với BE thật trong môi trường cô lập**. Không coi discover/lint/typecheck hay HTTP mock pass là nghiệm thu Backend. Contract: [spec FE](DIFFIE_HELLMAN_SPEC.md), authority là BE frontend-integration.md mục 19.
+Bằng chứng migration contract 2026-10-08 (trước khi BE mở rộng lịch sử): **43/43 API tests qua với BE thật trong môi trường cô lập**. Không coi discover/lint/typecheck hay HTTP mock pass là nghiệm thu Backend. Contract: [spec FE](../scopes/DIFFIE_HELLMAN_SPEC.md), authority là BE frontend-integration.md mục 19.
 
 Dùng bản BE có đủ sáu endpoint `/api/dh/*`, database integration riêng đã migrate, `HISTORY_API_ENABLED=true`, health báo database ok/history enabled. Không có traffic khác hoặc retention trong lúc test. Bộ test ghi metadata cho Caesar text/file, không xóa history hay tự deploy BE; không trỏ vào demo dùng chung.
 

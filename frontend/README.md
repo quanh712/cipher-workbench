@@ -137,12 +137,13 @@ kiểm thử theo thuật toán.
 Dùng [quy trình tại gốc monorepo](../docs/DEPLOYMENT.md): `dev` → `staging` →
 `main`; production dùng lại digest image đã nghiệm thu trên staging.
 Các recipe SQLite/Nginx trong [`deploy/`](deploy/), [`nginx/`](nginx/),
-[deployment cũ](docs/DEPLOYMENT.md) và [SQLite cũ](docs/SQLITE_COMPOSE.md) phục vụ
+[deployment cũ](../docs/frontend/DEPLOYMENT.md) và [SQLite cũ](../docs/frontend/SQLITE_COMPOSE.md) phục vụ
 tham khảo/phục hồi stack cũ.
 
-- [Backend contract](docs/BACKEND_CONTRACT.md)
-- [Spec nền tảng](docs/PROJECT_SPEC.md)
-- [RSA](docs/RSA_SPEC.md) và [Diffie–Hellman](docs/DIFFIE_HELLMAN_SPEC.md)
+- [Backend contract](../docs/frontend/BACKEND_CONTRACT.md)
+- [Mục lục scope/spec tất cả thuật toán](../docs/scopes/README.md)
+- [Spec nền tảng](../docs/scopes/PROJECT_SPEC.md)
+- [RSA](../docs/scopes/RSA_SPEC.md) và [Diffie–Hellman](../docs/scopes/DIFFIE_HELLMAN_SPEC.md)
 
 Ứng dụng phục vụ học tập. Thuật toán và mô phỏng không thay thế giao thức mật mã
 production. File đầu vào tối đa 5 MiB; hỗ trợ tùy thuật toán. RSA UI hiện hỗ trợ
