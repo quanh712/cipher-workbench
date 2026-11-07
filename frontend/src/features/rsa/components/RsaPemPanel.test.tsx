@@ -60,6 +60,46 @@ describe("PEM workspace", () => {
     expect(form.get("file")).toBe(file);
     expect(form.get("source")).toBeNull();
   });
+  it("imports private and public PEM files and rejects oversized keys", async () => {
+    setup();
+    const privateFile = new File(["PRIVATE KEY"], "private.pem");
+    Object.defineProperty(privateFile, "text", { value: async () => "PRIVATE KEY" });
+    fireEvent.change(screen.getByLabelText("Chọn file private key PEM"), {
+      target: { files: [privateFile] },
+    });
+    await waitFor(() =>
+      expect(screen.getByLabelText("Private key PEM")).toHaveValue("PRIVATE KEY"),
+    );
+    fireEvent.change(screen.getByLabelText("Thao tác PEM"), { target: { value: "verify" } });
+    const publicFile = new File(["PUBLIC KEY"], "public.pem");
+    Object.defineProperty(publicFile, "text", { value: async () => "PUBLIC KEY" });
+    fireEvent.change(screen.getByLabelText("Chọn file public key PEM"), {
+      target: { files: [publicFile] },
+    });
+    await waitFor(() => expect(screen.getByLabelText("Public key PEM")).toHaveValue("PUBLIC KEY"));
+    fireEvent.change(screen.getByLabelText("Chọn file public key PEM"), {
+      target: { files: [new File(["x".repeat(65537)], "large.pem")] },
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent("tối đa 64 KiB");
+  });
+  it("discards an imported private key after switching operation", async () => {
+    setup();
+    let resolve!: (value: string) => void;
+    const file = new File(["secret"], "private.pem");
+    Object.defineProperty(file, "text", {
+      value: () =>
+        new Promise<string>((done) => {
+          resolve = done;
+        }),
+    });
+    fireEvent.change(screen.getByLabelText("Chọn file private key PEM"), {
+      target: { files: [file] },
+    });
+    fireEvent.change(screen.getByLabelText("Thao tác PEM"), { target: { value: "verify" } });
+    await act(async () => resolve("PRIVATE KEY"));
+    fireEvent.change(screen.getByLabelText("Thao tác PEM"), { target: { value: "sign" } });
+    expect(screen.getByLabelText("Private key PEM")).toHaveValue("");
+  });
   it("aborts and discards a response after editing", async () => {
     const { gateway } = setup();
     let resolve!: (result: PemResult) => void;

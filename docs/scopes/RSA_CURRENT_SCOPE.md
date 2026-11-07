@@ -10,7 +10,7 @@ RSA giáo dục: n=pq, φ=(p-1)(q-1), d=e⁻¹ mod φ; c=m^e mod n, m=c^d mod n.
 
 ## 2. Phạm vi frontend
 
-UI có tab Mã hóa / Chữ ký số, sinh khóa thủ công/ngẫu nhiên, mã hóa/giải mã một số hoặc văn bản mode=char, ký/kiểm raw-integer. Ciphertext là mảng JSON chuỗi số. Thay input/khóa phải vô hiệu kết quả cũ. Hiện chữ ký hợp lệ/không hợp lệ khác lỗi dịch vụ. UI hiện chưa có upload PEM, mode=block hoặc upload file RSA.
+UI có các tab Mã hóa / Chữ ký số / Chữ ký PEM. Nhánh học thuật hỗ trợ sinh khóa thủ công/ngẫu nhiên, mã hóa/giải mã số và văn bản char/block, upload file .txt để mã hóa, ký/kiểm raw-integer. Nhánh PEM có nút Tạo ví dụ sinh bộ mẫu RSA 2048 bit trong trình duyệt theo yêu cầu, điền thông điệp/khóa và chữ ký mẫu hợp lệ cho chế độ kiểm tra; không tự gửi thao tác ký/kiểm tra lên server. Nhánh PEM hỗ trợ ký/kiểm văn bản hoặc file .txt, dán khóa hoặc chọn file .pem/.key tối đa 64 KiB, mật khẩu private key nếu có, tải chữ ký/public key và chuyển kết quả ký sang kiểm tra. Khóa riêng và mật khẩu được gửi lên backend khi ký, xóa khỏi form sau thành công hoặc rời tab; không lưu trong browser history. Thay input/khóa phải vô hiệu kết quả cũ. Chữ ký không hợp lệ là kết quả kiểm tra, khác lỗi dịch vụ.
 
 Các trạng thái bắt buộc: chưa nhập, không hợp lệ, đang xử lý, thành công và lỗi.
 Chỉ hiển thị kết quả thực khi API hoàn tất; xử lý hủy/thay đổi dữ liệu theo lifecycle
@@ -40,7 +40,7 @@ hoặc multipart `file,privateKeyPem,passphrase?`. Verify dùng
 SHA-256, MGF1-SHA256, salt dài 32 byte. Nội dung tối đa 5 MiB, PEM tối đa 64 KiB,
 passphrase tối đa 4 KiB; giới hạn này độc lập với file RSA encrypt 1.000.000 byte.
 Sign/verify trả `{success,result,history}`; `valid:false` là kết quả kiểm chữ ký,
-không tự biến thành lỗi HTTP. Nhánh này chưa có màn hình PEM trong FE hiện tại.
+không tự biến thành lỗi HTTP. Nhánh này có form trong tab Chữ ký PEM của FE.
 
 ### Ví dụ API kiểm chứng
 

@@ -8,6 +8,7 @@ review và dẫn liên kết; không ghép thành một file dài.
 - [Scope hiện hành của đủ 9 thuật toán](scopes/README.md).
 - [Phạm vi chung FE/BE, file, API và lịch sử](scopes/COMMON_SCOPE.md).
 - [Chạy local, migration và phục hồi](LOCAL_MIGRATION.md).
+- [Ví dụ chữ ký RSA PEM: khóa, văn bản, file và API](examples/rsa-pem/README.md).
 - [Phát hành staging/production](DEPLOYMENT.md).
 - [Tài liệu pháp lý](legal/) và [bằng chứng audit](audits/).
 

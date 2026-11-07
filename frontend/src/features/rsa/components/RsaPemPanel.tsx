@@ -1,11 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import { RsaFilePicker } from "./RsaFilePicker";
+import { createPemExample } from "../demo/pemExample";
 import type { PemResult, RsaGateway } from "../services/rsaGateway";
 import { saveBlob } from "../../../shared/utils/download";
 
-export function RsaPemPanel({ gateway }: { gateway: RsaGateway | null }) {
+export interface RsaPemPanelHandle {
+  loadExample(): Promise<void>;
+}
+
+export function RsaPemPanel({
+  gateway,
+  ref,
+}: {
+  gateway: RsaGateway | null;
+  ref?: Ref<RsaPemPanelHandle>;
+}) {
   const [operation, setOperation] = useState<"sign" | "verify">("sign");
   const [source, setSource] = useState("text");
   const [text, setText] = useState("");
+  const [keyFile, setKeyFile] = useState<File | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [privateKey, setPrivateKey] = useState("");
   const [publicKey, setPublicKey] = useState("");
@@ -14,19 +27,72 @@ export function RsaPemPanel({ gateway }: { gateway: RsaGateway | null }) {
   const [result, setResult] = useState<PemResult | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [exampleLoaded, setExampleLoaded] = useState(false);
   const pending = useRef<AbortController | null>(null);
+  const revision = useRef(0);
   useEffect(
     () => () => {
+      revision.current += 1;
       pending.current?.abort();
     },
     [],
   );
   function invalidate() {
+    revision.current += 1;
     pending.current?.abort();
     pending.current = null;
     setBusy(false);
     setResult(null);
     setError("");
+  }
+  useImperativeHandle(ref, () => ({
+    async loadExample() {
+      invalidate();
+      setExampleLoaded(false);
+      setKeyFile(null);
+      setPrivateKey("");
+      setPassphrase("");
+      const current = revision.current;
+      setBusy(true);
+      try {
+        const example = await createPemExample();
+        if (current !== revision.current) return;
+        setSource("text");
+        setFile(null);
+        setText(example.text);
+        setPrivateKey(operation === "sign" ? example.privateKey : "");
+        setPublicKey(example.publicKey);
+        setSignature(example.signature);
+        setExampleLoaded(true);
+      } catch {
+        if (current === revision.current)
+          setError("Không thể tạo ví dụ PEM. Hãy dùng localhost hoặc HTTPS và thử lại.");
+      } finally {
+        if (current === revision.current) setBusy(false);
+      }
+    },
+  }));
+  async function importKey(file: File | undefined) {
+    if (!file) return;
+    invalidate();
+    setKeyFile(null);
+    const current = revision.current;
+    const target = operation;
+    try {
+      if (!/\.(pem|key)$/i.test(file.name) || !file.size || file.size > 64 * 1024)
+        throw new Error("Chọn file khóa .pem hoặc .key, không rỗng, tối đa 64 KiB.");
+      setBusy(true);
+      const value = await file.text();
+      if (current !== revision.current) return;
+      setKeyFile(file);
+      if (target === "sign") setPrivateKey(value);
+      else setPublicKey(value);
+    } catch (failure) {
+      if (current === revision.current)
+        setError(failure instanceof Error ? failure.message : "Không thể đọc file khóa PEM.");
+    } finally {
+      if (current === revision.current) setBusy(false);
+    }
   }
   async function submit() {
     if (!gateway?.standardSignature || pending.current) return;
@@ -58,6 +124,7 @@ export function RsaPemPanel({ gateway }: { gateway: RsaGateway | null }) {
       const response = await gateway.standardSignature(operation, payload, controller.signal);
       if (controller.signal.aborted) return;
       setResult(response);
+      if (operation === "sign") setKeyFile(null);
       setPrivateKey("");
       setPassphrase("");
     } catch (failure) {
@@ -80,6 +147,7 @@ export function RsaPemPanel({ gateway }: { gateway: RsaGateway | null }) {
     <label className="rsa__field rsa__field--text">
       <span>{label}</span>
       <textarea
+        aria-label={label}
         readOnly={readOnly}
         rows={rows}
         value={value}
@@ -107,12 +175,20 @@ export function RsaPemPanel({ gateway }: { gateway: RsaGateway | null }) {
       >
         <p className="rsa__help">
           Dùng khóa RSA định dạng PEM. Khóa số ở tab học thuật không dùng cho luồng này. Khóa riêng
-          và mật khẩu được xóa sau khi xử lý thành công hoặc rời tab.
+          và mật khẩu được gửi tới máy chủ để ký, rồi xóa khỏi form sau khi xử lý thành công hoặc
+          rời tab.
         </p>
         <p className="rsa__help">
           Nội dung file, khóa PEM và mật khẩu không được lưu vào lịch sử trình duyệt. Nếu bật lịch
           sử máy chủ, backend có thể lưu nội dung ký.
         </p>
+        {exampleLoaded && (
+          <p className="rsa__help" role="status">
+            Đã tạo bộ mẫu RSA 2048 bit dùng thử. Bấm{" "}
+            {operation === "sign" ? "Ký PEM" : "Kiểm tra PEM"} để chạy; sửa nội dung sau khi ký để
+            thử chữ ký không hợp lệ.
+          </p>
+        )}
         <label className="rsa__field">
           <span>Thao tác PEM</span>
           <select
@@ -120,6 +196,7 @@ export function RsaPemPanel({ gateway }: { gateway: RsaGateway | null }) {
             onChange={(event) => {
               invalidate();
               setOperation(event.target.value as "sign" | "verify");
+              setKeyFile(null);
               setPrivateKey("");
               setPassphrase("");
             }}
@@ -145,21 +222,38 @@ export function RsaPemPanel({ gateway }: { gateway: RsaGateway | null }) {
         {source === "text" ? (
           field("Nội dung ký / kiểm tra", text, setText)
         ) : (
-          <label className="rsa__field">
-            <span>File ký / kiểm tra (.txt, tối đa 5 MiB)</span>
-            <input
-              type="file"
-              accept=".txt,text/plain"
-              onChange={(event) => {
-                invalidate();
-                setFile(event.target.files?.[0] ?? null);
-              }}
-            />
-          </label>
+          <RsaFilePicker
+            label="File ký / kiểm tra (.txt, tối đa 5 MiB)"
+            hint="Văn bản UTF-8, tối đa 5 MiB. Giữ nguyên nội dung để kiểm tra chữ ký."
+            accept=".txt,text/plain"
+            file={file}
+            onChange={(selected) => {
+              invalidate();
+              setFile(selected);
+            }}
+          />
         )}
+        <RsaFilePicker
+          label={operation === "sign" ? "Chọn file private key PEM" : "Chọn file public key PEM"}
+          hint="Tối đa 64 KiB. Bạn cũng có thể dán khóa vào ô bên dưới."
+          accept=".pem,.key"
+          kind="key"
+          file={keyFile}
+          onChange={(selected) => {
+            void importKey(selected);
+          }}
+        />
         {operation === "sign" ? (
           <>
-            {field("Private key PEM", privateKey, setPrivateKey, 6)}
+            {field(
+              "Private key PEM",
+              privateKey,
+              (value) => {
+                setKeyFile(null);
+                setPrivateKey(value);
+              },
+              6,
+            )}
             <label className="rsa__field">
               <span>Mật khẩu khóa (nếu có)</span>
               <input
@@ -175,7 +269,15 @@ export function RsaPemPanel({ gateway }: { gateway: RsaGateway | null }) {
           </>
         ) : (
           <>
-            {field("Public key PEM", publicKey, setPublicKey, 6)}
+            {field(
+              "Public key PEM",
+              publicKey,
+              (value) => {
+                setKeyFile(null);
+                setPublicKey(value);
+              },
+              6,
+            )}
             {field("Chữ ký base64", signature, setSignature)}
           </>
         )}

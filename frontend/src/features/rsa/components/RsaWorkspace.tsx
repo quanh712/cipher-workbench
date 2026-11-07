@@ -5,7 +5,8 @@ import type { NoticeState } from "../../../shared/types/cipher";
 import { CipherModeSelector } from "../../../shared/components/CipherModeSelector";
 import { saveBlob } from "../../../shared/utils/download";
 import { useRsaSignature } from "../hooks/useRsaSignature";
-import { RsaPemPanel } from "./RsaPemPanel";
+import { RsaFilePicker } from "./RsaFilePicker";
+import { RsaPemPanel, type RsaPemPanelHandle } from "./RsaPemPanel";
 import { RsaSignaturePanel } from "./RsaSignaturePanel";
 import { parseRsaCipher, type RsaCipherController } from "../hooks/useRsaCipher";
 import { decimal } from "../utils/validation";
@@ -211,14 +212,13 @@ function TransformPanel({ cipher, task }: { cipher: RsaCipherController; task: R
               </label>
             )}
             {encrypt && cipher.textSource === "file" && (
-              <label className="rsa__field">
-                <span>File mã hóa (.txt UTF-8, tối đa 1 MB / 10.000 ký tự)</span>
-                <input
-                  type="file"
-                  accept=".txt,text/plain"
-                  onChange={(event) => cipher.setFile(event.target.files?.[0] ?? null)}
-                />
-              </label>
+              <RsaFilePicker
+                label="File mã hóa (.txt UTF-8, tối đa 1 MB / 10.000 ký tự)"
+                hint="Tối đa 1 MB và 10.000 ký tự. Chọn văn bản UTF-8 để mã hóa."
+                accept=".txt,text/plain"
+                file={cipher.file}
+                onChange={cipher.setFile}
+              />
             )}
             {!encrypt && cipher.textMode === "block" && (
               <label className="rsa__field">
@@ -440,6 +440,7 @@ export function RsaWorkspace({
   );
   const signature = useRsaSignature(cipher, tab === "signature", verification);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const pemPanel = useRef<RsaPemPanelHandle | null>(null);
   const signatureTab = tab === "signature";
   const tabs = ["encrypt", "signature", "pem"] as const;
   return (
@@ -499,9 +500,11 @@ export function RsaWorkspace({
           <button
             className="button button--secondary"
             type="button"
-            disabled={tab === "pem"}
             onClick={() => {
-              if (tab === "pem") return;
+              if (tab === "pem") {
+                void pemPanel.current?.loadExample();
+                return;
+              }
               if (signatureTab)
                 signature.loadScenario(signature.mode === "sign" ? "sign-success" : "verify-valid");
               else {
@@ -715,7 +718,7 @@ export function RsaWorkspace({
       </div>
       {tab === "pem" && cipher.active && (
         <div id="rsa-panel-pem" role="tabpanel" aria-labelledby="rsa-tab-pem">
-          <RsaPemPanel key={cipher.resetVersion} gateway={cipher.gateway} />
+          <RsaPemPanel ref={pemPanel} key={cipher.resetVersion} gateway={cipher.gateway} />
         </div>
       )}
       <div

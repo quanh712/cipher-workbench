@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("tab", { name: /RSA.*Khả dụng/ }).click();
+  const mobileSelector = page.getByRole("combobox", { name: "Chọn thuật toán" });
+  if (await mobileSelector.isVisible()) await mobileSelector.selectOption("rsa");
+  else await page.getByRole("tab", { name: /RSA.*Khả dụng/ }).click();
 });
 
 test("explicit key generation, independent number operations and trace", async ({ page }) => {
@@ -396,7 +398,14 @@ test("PEM signs original file bytes, verifies and rejects tampering", async ({ p
   await page
     .getByLabel(/File ký/)
     .setInputFiles({ name: "signed.txt", mimeType: "text/plain", buffer: bytes });
-  await page.getByLabel("Private key PEM", { exact: true }).fill(keys.privateKey);
+  await page.getByLabel("Chọn file private key PEM", { exact: true }).setInputFiles({
+    name: "private.pem",
+    mimeType: "text/plain",
+    buffer: Buffer.from(keys.privateKey),
+  });
+  await expect(page.getByText("signed.txt", { exact: true })).toBeVisible();
+  await expect(page.getByText("private.pem", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Private key PEM", { exact: true })).toHaveValue(keys.privateKey);
   await page.getByRole("button", { name: "Ký PEM", exact: true }).click();
   await expect(page.getByText("Ký PEM thành công.", { exact: true })).toBeVisible();
   await expect(
@@ -404,6 +413,13 @@ test("PEM signs original file bytes, verifies and rejects tampering", async ({ p
   ).toBeVisible();
   await expect(page.getByLabel("Private key PEM", { exact: true })).toHaveValue("");
   await page.getByRole("button", { name: "Dùng để kiểm tra" }).click();
+  await page.getByLabel("Chọn file public key PEM", { exact: true }).setInputFiles({
+    name: "public.pem",
+    mimeType: "text/plain",
+    buffer: Buffer.from(keys.publicKey),
+  });
+  await expect(page.getByText("public.pem", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Public key PEM", { exact: true })).toHaveValue(keys.publicKey);
   await page.getByRole("button", { name: "Kiểm tra PEM", exact: true }).click();
   await expect(page.getByText("Chữ ký hợp lệ.", { exact: true })).toBeVisible();
   await page
@@ -416,4 +432,61 @@ test("PEM signs original file bytes, verifies and rejects tampering", async ({ p
   expect(persisted).not.toContain("Tiếng Việt");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: test.info().outputPath("rsa-pem.png"), fullPage: true });
+});
+
+test("PEM signs text with an encrypted private key and verifies the result", async ({ page }) => {
+  const { generateKeyPairSync } = await import("node:crypto");
+  const keys = generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    publicKeyEncoding: { type: "spki", format: "pem" },
+    privateKeyEncoding: {
+      type: "pkcs8",
+      format: "pem",
+      cipher: "aes-256-cbc",
+      passphrase: "demo-password",
+    },
+  });
+  await page.getByRole("tab", { name: "Chữ ký PEM", exact: true }).click();
+  await page
+    .getByLabel("Nội dung ký / kiểm tra", { exact: true })
+    .fill("Ví dụ chữ ký PEM tiếng Việt.");
+  await page.getByLabel("Private key PEM", { exact: true }).fill(keys.privateKey);
+  await page.getByRole("button", { name: "Ký PEM", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("passphrase");
+  await page.getByLabel("Mật khẩu khóa (nếu có)").fill("demo-password");
+  await page.getByRole("button", { name: "Ký PEM", exact: true }).click();
+  await expect(page.getByText("Ký PEM thành công.", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Mật khẩu khóa (nếu có)")).toHaveValue("");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Tải chữ ký", exact: true }).click();
+  expect((await download).suggestedFilename()).toBe("rsa-signature.txt");
+  await page.getByRole("button", { name: "Dùng để kiểm tra" }).click();
+  await page.getByRole("button", { name: "Kiểm tra PEM", exact: true }).click();
+  await expect(page.getByText("Chữ ký hợp lệ.", { exact: true })).toBeVisible();
+});
+
+test("PEM example button prepares signing and verification without manual keys", async ({
+  page,
+}) => {
+  await page.getByRole("tab", { name: "Chữ ký PEM", exact: true }).click();
+  const example = page.getByRole("button", { name: "Tạo ví dụ", exact: true });
+  await expect(example).toBeEnabled();
+  await example.click();
+  await expect(page.getByText(/Đã tạo bộ mẫu RSA 2048 bit/)).toBeVisible();
+  await expect(page.getByLabel("Private key PEM", { exact: true })).toHaveValue(
+    /BEGIN PRIVATE KEY/,
+  );
+  await page.getByRole("button", { name: "Ký PEM", exact: true }).click();
+  await expect(page.getByText("Ký PEM thành công.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Dùng để kiểm tra" }).click();
+  await page.getByRole("button", { name: "Kiểm tra PEM", exact: true }).click();
+  await expect(page.getByText("Chữ ký hợp lệ.", { exact: true })).toBeVisible();
+  await page.getByLabel("Nội dung ký / kiểm tra", { exact: true }).fill("Nội dung đã sửa.");
+  await page.getByRole("button", { name: "Kiểm tra PEM", exact: true }).click();
+  await expect(page.getByText(/Chữ ký không hợp lệ:/)).toBeVisible();
+  // The example also works when entering directly in verification mode.
+  await example.click();
+  await expect(page.getByText(/Đã tạo bộ mẫu RSA 2048 bit/)).toBeVisible();
+  await page.getByRole("button", { name: "Kiểm tra PEM", exact: true }).click();
+  await expect(page.getByText("Chữ ký hợp lệ.", { exact: true })).toBeVisible();
 });
