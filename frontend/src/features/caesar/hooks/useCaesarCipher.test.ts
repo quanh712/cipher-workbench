@@ -20,21 +20,23 @@ describe("useCaesarCipher", () => {
     Object.defineProperty(secondFile, "text", { value: () => secondRead.promise });
     const { result } = renderHook(() => useCaesarCipher());
 
+    let firstOperation!: Promise<void>;
+    let secondOperation!: Promise<void>;
     act(() => {
-      void result.current.setFile(firstFile);
-      void result.current.setFile(secondFile);
+      firstOperation = result.current.setFile(firstFile);
+      secondOperation = result.current.setFile(secondFile);
     });
 
     await act(async () => {
       secondRead.resolve("second content");
-      await secondRead.promise;
+      await secondOperation;
     });
     expect(result.current.file?.name).toBe("second.txt");
     expect(result.current.fileText).toBe("second content");
 
     await act(async () => {
       firstRead.resolve("stale first content");
-      await firstRead.promise;
+      await firstOperation;
     });
     expect(result.current.file?.name).toBe("second.txt");
     expect(result.current.fileText).toBe("second content");

@@ -1,12 +1,12 @@
 import { defineConfig, loadEnv } from "vite";
-import react from "@vitejs/plugin-react";
+import preact from "@preact/preset-vite";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "BACKEND_DEV_URL");
 
   return {
     plugins: [
-      react(),
+      preact(),
       {
         name: "inline-entry-styles",
         // The small shared stylesheet is needed for the first paint. Inline only

@@ -58,7 +58,7 @@ describe("useHillCipher analysis state", () => {
         [2, 5],
       ],
     });
-    expect(result.current.analysis.status).toBe("valid");
+    await waitFor(() => expect(result.current.analysis.status).toBe("valid"));
     expect(result.current.analysis.fingerprint).toBe(
       JSON.stringify({
         key: [

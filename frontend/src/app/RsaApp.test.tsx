@@ -46,10 +46,10 @@ describe("RSA app registration", () => {
     const rsaTab = screen.getByRole("tab", { name: /RSA/ });
     fireEvent.click(rsaTab);
     await screen.findByRole("heading", { name: "RSA từng bước" });
-    fireEvent.change(screen.getByRole("textbox", { name: "Thông điệp" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Thông điệp" }), {
       target: { value: "Nội dung mới 😀" },
     });
-    fireEvent.change(screen.getByRole("textbox", { name: "p · số nguyên tố" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "p · số nguyên tố" }), {
       target: { value: "101" },
     });
     fireEvent.click(screen.getByRole("tab", { name: /Caesar/ }));

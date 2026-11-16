@@ -63,7 +63,7 @@ describe("DES workspace", () => {
     expect(screen.getByRole("note")).toHaveTextContent("không được tính từ nội dung");
     fireEvent.click(screen.getByRole("button", { name: "Mã hóa" }));
     await waitFor(() => expect(screen.getByLabelText("Nội dung đầu vào DES")).toHaveFocus());
-    fireEvent.change(screen.getByLabelText("Nội dung đầu vào DES"), { target: { value: "x" } });
+    fireEvent.input(screen.getByLabelText("Nội dung đầu vào DES"), { target: { value: "x" } });
     fireEvent.click(screen.getByRole("button", { name: "Mã hóa" }));
     await waitFor(() => expect(screen.getByLabelText("Khóa DES")).toHaveFocus());
     expect(gateway.process).not.toHaveBeenCalled();
@@ -122,8 +122,8 @@ describe("DES workspace", () => {
           gateway={createDesGateway({ process: vi.fn().mockResolvedValue({ text, attachment }) })}
         />,
       );
-      fireEvent.change(screen.getByLabelText("Nội dung đầu vào DES"), { target: { value: "x" } });
-      fireEvent.change(screen.getByLabelText("Khóa DES"), { target: { value: "not hex" } });
+      fireEvent.input(screen.getByLabelText("Nội dung đầu vào DES"), { target: { value: "x" } });
+      fireEvent.input(screen.getByLabelText("Khóa DES"), { target: { value: "not hex" } });
       fireEvent.click(screen.getByRole("button", { name: "Mã hóa" }));
       await screen.findByText("Đã nhận kết quả mô phỏng.");
       const output = within(screen.getByRole("region", { name: "Kết quả DES" }));

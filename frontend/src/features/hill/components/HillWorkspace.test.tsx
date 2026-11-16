@@ -20,7 +20,7 @@ function renderWithExampleKey(gateway: HillGateway) {
     ["Khóa hàng 2 cột 1", "2"],
     ["Khóa hàng 2 cột 2", "5"],
   ])
-    fireEvent.change(screen.getByRole("textbox", { name: label }), { target: { value } });
+    fireEvent.input(screen.getByRole("textbox", { name: label }), { target: { value } });
   return view;
 }
 

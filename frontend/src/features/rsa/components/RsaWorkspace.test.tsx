@@ -33,7 +33,7 @@ function setup(example = true) {
 }
 function manual() {
   fireEvent.click(screen.getByRole("button", { name: "Nhập khóa" }));
-  fireEvent.change(screen.getByRole("textbox", { name: "n · modulo" }), {
+  fireEvent.input(screen.getByRole("textbox", { name: "n · modulo" }), {
     target: { value: "187" },
   });
 }
@@ -55,7 +55,7 @@ describe("RSA independent operations", () => {
     }
     const [number] = panels();
     manual();
-    fireEvent.change(screen.getByRole("textbox", { name: "e · khóa công khai" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "e · khóa công khai" }), {
       target: { value: "7" },
     });
     fireEvent.click(number.getByRole("button", { name: "Mã hóa" }));
@@ -63,7 +63,7 @@ describe("RSA independent operations", () => {
     expect(status).toHaveClass("status", "status--success");
     expect(status.parentElement).toHaveClass("rsa__transform-panel");
     expect(status.parentElement?.lastElementChild).toBe(status);
-    fireEvent.change(number.getByRole("textbox", { name: "Bản rõ P (số)" }), {
+    fireEvent.input(number.getByRole("textbox", { name: "Bản rõ P (số)" }), {
       target: { value: "abc" },
     });
     expect(number.getByText(/^! P phải/)).toHaveClass("status--error");
@@ -100,7 +100,7 @@ describe("RSA independent operations", () => {
   it("encrypts with public key only and keeps text mode independent", async () => {
     const { gateway, number, text } = setup();
     manual();
-    fireEvent.change(screen.getByRole("textbox", { name: "e · khóa công khai" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "e · khóa công khai" }), {
       target: { value: "7" },
     });
     fireEvent.click(number.getByRole("button", { name: "Mã hóa" }));
@@ -120,16 +120,16 @@ describe("RSA independent operations", () => {
   it("decrypts pasted JSON with private key only and rejects numeric JSON values", async () => {
     const { gateway, text } = setup();
     manual();
-    fireEvent.change(screen.getByRole("textbox", { name: "d · khóa riêng" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "d · khóa riêng" }), {
       target: { value: "23" },
     });
     fireEvent.click(text.getByRole("radio", { name: /Giải mã/ }));
     const input = text.getByRole("textbox", { name: "Bản mã (JSON)" });
-    fireEvent.change(input, { target: { value: "[9007199254740993]" } });
+    fireEvent.input(input, { target: { value: "[9007199254740993]" } });
     fireEvent.click(text.getByRole("button", { name: "Giải mã" }));
     expect(text.getByRole("alert")).toHaveTextContent("chuỗi số");
     expect(gateway.transform).not.toHaveBeenCalled();
-    fireEvent.change(input, { target: { value: '["9007199254740993"]' } });
+    fireEvent.input(input, { target: { value: '["9007199254740993"]' } });
     fireEvent.click(text.getByRole("button", { name: "Giải mã" }));
     await waitFor(() =>
       expect(text.getByRole("textbox", { name: "Kết quả bản rõ" })).toHaveValue("88"),
@@ -143,7 +143,7 @@ describe("RSA independent operations", () => {
   it("clears manual keys, results and modes on reset without sending requests", async () => {
     const { gateway, number } = setup();
     manual();
-    fireEvent.change(screen.getByRole("textbox", { name: "e · khóa công khai" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "e · khóa công khai" }), {
       target: { value: "7" },
     });
     fireEvent.click(number.getByRole("button", { name: "Mã hóa" }));
@@ -177,7 +177,7 @@ describe("RSA independent operations", () => {
     });
     const { number } = setup();
     manual();
-    fireEvent.change(screen.getByRole("textbox", { name: "e · khóa công khai" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "e · khóa công khai" }), {
       target: { value: "7" },
     });
     fireEvent.click(number.getByRole("button", { name: "Dán" }));
@@ -202,7 +202,7 @@ describe("RSA independent operations", () => {
     render(<Fixture />);
     fireEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
     manual();
-    fireEvent.change(screen.getByRole("textbox", { name: "e · khóa công khai" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "e · khóa công khai" }), {
       target: { value: "7" },
     });
     const number = within(screen.getByRole("region", { name: "Mã hóa và giải mã một khối số" }));
@@ -270,12 +270,12 @@ it("validates ciphertext without converting large integers to numbers", () => {
 it("decrypts a block envelope with its original UTF-8 length", async () => {
   const { gateway, text } = setup(false);
   manual();
-  fireEvent.change(screen.getByRole("textbox", { name: "d · khóa riêng" }), {
+  fireEvent.input(screen.getByRole("textbox", { name: "d · khóa riêng" }), {
     target: { value: "23" },
   });
   fireEvent.change(screen.getByLabelText("Cách chia khối"), { target: { value: "block" } });
   fireEvent.click(text.getByRole("radio", { name: /Giải mã/ }));
-  fireEvent.change(text.getByRole("textbox", { name: "Bản mã (JSON)" }), {
+  fireEvent.input(text.getByRole("textbox", { name: "Bản mã (JSON)" }), {
     target: { value: '{"mode":"block","cipher":["9007199254740993"],"originalUtf8ByteLength":2}' },
   });
   fireEvent.click(text.getByRole("button", { name: "Giải mã" }));

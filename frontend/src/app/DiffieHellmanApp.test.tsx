@@ -50,7 +50,7 @@ describe("Diffie–Hellman app registration", () => {
     vi.stubEnv("VITE_ENABLE_DIFFIE_HELLMAN", "true");
     const gateway = createDiffieHellmanGateway();
     render(<App diffieHellmanGateway={gateway} />);
-    fireEvent.change(screen.getByRole("textbox", { name: "Nội dung đầu vào" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Nội dung đầu vào" }), {
       target: { value: "Bản nháp Caesar" },
     });
     await openDh();
@@ -60,7 +60,7 @@ describe("Diffie–Hellman app registration", () => {
       ["Số mũ riêng X_A", "7"],
       ["Số mũ riêng X_B", "12"],
     ]) {
-      fireEvent.change(screen.getByRole("textbox", { name: label }), { target: { value } });
+      fireEvent.input(screen.getByRole("textbox", { name: label }), { target: { value } });
     }
     fireEvent.click(screen.getByRole("tab", { name: /Caesar/ }));
     expect(screen.getByRole("textbox", { name: "Nội dung đầu vào" })).toHaveValue(
@@ -141,7 +141,7 @@ describe("Diffie–Hellman app registration", () => {
     render(<App diffieHellmanGateway={gateway} />);
     await screen.findByRole("button", { name: "Lịch sử thao tác" });
     await openDh();
-    fireEvent.change(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
       target: { value: "7" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Lịch sử thao tác" }));

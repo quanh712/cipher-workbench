@@ -49,7 +49,7 @@ const caesar = () => screen.getByRole("region", { name: "Caesar bằng khóa chu
 const output = () =>
   within(caesar()).getByRole("region", { name: "Kết quả Caesar bằng khóa chung" });
 function change(name: string, value: string) {
-  fireEvent.change(screen.getByRole("textbox", { name }), { target: { value } });
+  fireEvent.input(screen.getByRole("textbox", { name }), { target: { value } });
 }
 function click(name: string) {
   fireEvent.click(screen.getByRole("button", { name }));

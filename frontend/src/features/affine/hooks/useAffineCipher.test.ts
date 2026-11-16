@@ -116,18 +116,19 @@ describe("useAffineCipher", () => {
     const gateway = createAffineGateway();
     const { result } = renderHook(() => useAffineCipher(gateway));
 
+    let reading!: Promise<void>;
     act(() => {
       result.current.setInputType("file");
       result.current.setA("5");
       result.current.setB("8");
-      void result.current.setFile(file);
+      reading = result.current.setFile(file);
     });
     expect(result.current.isReadingFile).toBe(true);
     expect(result.current.canSubmit).toBe(false);
 
     await act(async () => {
       deferred.resolve("\uFEFFHELLO");
-      await deferred.promise;
+      await reading;
     });
     expect(result.current.fileText).toBe("HELLO");
     expect(result.current.canSubmit).toBe(true);
@@ -170,17 +171,19 @@ describe("useAffineCipher", () => {
     Object.defineProperty(secondFile, "text", { value: () => secondRead.promise });
     const { result } = renderHook(() => useAffineCipher(createAffineGateway()));
 
+    let firstOperation!: Promise<void>;
+    let secondOperation!: Promise<void>;
     act(() => {
-      void result.current.setFile(firstFile);
-      void result.current.setFile(secondFile);
+      firstOperation = result.current.setFile(firstFile);
+      secondOperation = result.current.setFile(secondFile);
     });
     await act(async () => {
       secondRead.resolve("second content");
-      await secondRead.promise;
+      await secondOperation;
     });
     await act(async () => {
       firstRead.resolve("stale first content");
-      await firstRead.promise;
+      await firstOperation;
     });
 
     expect(result.current.file?.name).toBe("second.txt");

@@ -40,10 +40,10 @@ describe("AffineKeyConfig", () => {
   it("emits raw input tokens without converting them", () => {
     const { onAChange, onBChange } = renderConfig();
 
-    fireEvent.change(screen.getByRole("textbox", { name: "Khóa nhân a" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Khóa nhân a" }), {
       target: { value: "+005" },
     });
-    fireEvent.change(screen.getByRole("textbox", { name: "Khóa dịch b" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Khóa dịch b" }), {
       target: { value: "-18" },
     });
 

@@ -90,7 +90,7 @@ describe("RSA signature workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
     fireEvent.click(screen.getByRole("button", { name: "Ký" }));
     await screen.findByText("Đã ký", { exact: true });
-    fireEvent.change(screen.getByRole("textbox", { name: "Thông điệp gốc m (số)" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Thông điệp gốc m (số)" }), {
       target: { value: "42" },
     });
     expect(screen.queryByText("Đã ký", { exact: true })).not.toBeInTheDocument();
@@ -99,7 +99,7 @@ describe("RSA signature workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
     fireEvent.click(screen.getByRole("button", { name: "Ký" }));
     await screen.findByText("Đã ký", { exact: true });
-    fireEvent.change(screen.getByRole("textbox", { name: "d · khóa riêng" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "d · khóa riêng" }), {
       target: { value: "9" },
     });
     expect(screen.queryByText("Đã ký", { exact: true })).not.toBeInTheDocument();

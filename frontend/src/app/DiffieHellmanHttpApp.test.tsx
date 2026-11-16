@@ -55,7 +55,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
     expect(fetch).not.toHaveBeenCalled();
     example();
     expect(fetch).not.toHaveBeenCalled();
-    fireEvent.change(input("Số nguyên tố q"), { target: { value: " \t00023 " } });
+    fireEvent.input(input("Số nguyên tố q"), { target: { value: " \t00023 " } });
     fetch.mockResolvedValueOnce(json(exchangeBody()));
     fireEvent.submit(screen.getByRole("form"));
     fireEvent.submit(screen.getByRole("form")); // Repeated submit must share the same pending lock.
@@ -97,7 +97,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
   it("blocks malformed input before HTTP and random sends only public parameters", async () => {
     const fetch = await setup();
     example();
-    fireEvent.change(input("Số mũ riêng X_A"), { target: { value: "x" } });
+    fireEvent.input(input("Số mũ riêng X_A"), { target: { value: "x" } });
     start("exchange");
     expect(fetch).not.toHaveBeenCalled();
     expect(input("Số mũ riêng X_A")).toHaveAttribute("aria-invalid", "true");
@@ -135,7 +135,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
     expect(input("Số mũ riêng X_A")).toHaveValue("6");
     expect(input("Số mũ riêng X_B")).toHaveValue("15");
     expect(result()).not.toBeInTheDocument();
-    expectIdle();
+    await vi.waitFor(expectIdle);
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
@@ -239,7 +239,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
       await act(async () => {
         next.resolve(json(task === "exchange" ? exchangeBody() : randomBody()));
       });
-      expectIdle();
+      await vi.waitFor(expectIdle);
       expect(screen.getByRole("status", { name: "Trạng thái trao đổi DH" })).toHaveTextContent(
         task === "exchange" ? "Hai bên đã thiết lập" : "Đã điền hai số mũ riêng",
       );
@@ -257,7 +257,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
         start(task);
         expect(screen.getByRole("form")).toHaveAttribute("aria-busy", "true");
         if (action === "edit")
-          fireEvent.change(input("Số mũ riêng X_A"), { target: { value: "9" } });
+          fireEvent.input(input("Số mũ riêng X_A"), { target: { value: "9" } });
         if (action === "reset") fireEvent.click(screen.getByRole("button", { name: "Đặt lại" }));
         if (action === "cipher") fireEvent.click(screen.getByRole("tab", { name: /Caesar/ }));
         if (action === "header")
@@ -294,7 +294,7 @@ describe("App → Diffie–Hellman HTTP adapter", () => {
         await act(async () => {
           next.resolve(json(task === "exchange" ? exchangeBody() : randomBody()));
         });
-        expectIdle();
+        await vi.waitFor(expectIdle);
         expect(screen.getByRole("status", { name: "Trạng thái trao đổi DH" })).toHaveTextContent(
           task === "exchange" ? "Hai bên đã thiết lập" : "Đã điền hai số mũ riêng",
         );

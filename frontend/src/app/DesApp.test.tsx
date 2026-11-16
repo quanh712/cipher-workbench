@@ -34,10 +34,10 @@ describe("DES app registration", () => {
     render(<DemoApp />);
     fireEvent.click(screen.getByRole("tab", { name: /DES.*Demo/ }));
     expect(await screen.findByLabelText("Nội dung đầu vào DES")).toHaveValue("");
-    fireEvent.change(screen.getByLabelText("Nội dung đầu vào DES"), {
+    fireEvent.input(screen.getByLabelText("Nội dung đầu vào DES"), {
       target: { value: "DES draft" },
     });
-    fireEvent.change(screen.getByLabelText("Khóa DES"), { target: { value: "any key" } });
+    fireEvent.input(screen.getByLabelText("Khóa DES"), { target: { value: "any key" } });
     fireEvent.click(screen.getByRole("button", { name: "Mã hóa" }));
     await screen.findByText("Đã nhận kết quả mô phỏng.");
     fireEvent.click(screen.getByRole("tab", { name: /Caesar/ }));

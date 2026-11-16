@@ -14,7 +14,7 @@ and `cipher-workbench-be` repositories are retained for recovery only; edit
 `frontend/` and `backend/` here. See [local migration and recovery](docs/LOCAL_MIGRATION.md).
 
 ```text
-frontend/     React + TypeScript + Vite
+frontend/     React-compatible UI (Preact runtime) + TypeScript + Vite
 backend/      Python 3.12 + FastAPI
 deploy/       Render release and verification tools
 .github/      checks, staging builds, and production promotion

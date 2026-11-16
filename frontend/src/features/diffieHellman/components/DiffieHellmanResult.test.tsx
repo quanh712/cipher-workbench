@@ -134,18 +134,18 @@ describe("Diffie–Hellman result", () => {
     const gateway = setupWorkspace();
     const results = () => screen.queryByRole("region", { name: "Kết quả thiết lập bí mật chung" });
     expect(results()).not.toBeInTheDocument();
-    fireEvent.change(screen.getByRole("textbox", { name: "Số nguyên tố q" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Số nguyên tố q" }), {
       target: { value: " 00023 " },
     });
     fireEvent.click(screen.getByRole("button", { name: "Thiết lập bí mật chung" }));
     expect(
       await screen.findByRole("region", { name: "Kết quả thiết lập bí mật chung" }),
     ).toHaveTextContent("q=23, α=5");
-    fireEvent.change(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
       target: { value: "7" },
     });
     expect(results()).not.toBeInTheDocument();
-    fireEvent.change(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
       target: { value: "6" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Thiết lập bí mật chung" }));

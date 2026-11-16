@@ -16,6 +16,17 @@ test("first paint needs no external stylesheet or theme script and respects save
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   expect(requests.some((url) => /theme-bootstrap\.js|\.css(?:\?|$)/.test(url))).toBe(false);
   expect(requests.some((url) => /\/(rsaApi|desApi|diffieHellmanApi)-/.test(url))).toBe(false);
+  await page.waitForLoadState("networkidle");
+  const initialScriptBytes = await page.evaluate(() =>
+    performance.getEntriesByType("resource").reduce((bytes, entry) => {
+      const resource = entry as PerformanceResourceTiming;
+      return bytes + (/\.js(?:\?|$)/.test(resource.name) ? resource.decodedBodySize : 0);
+    }, 0),
+  );
+  // Measure actual decoded responses, independent of CDN compression/cache hits.
+  // This catches accidentally shipping a second renderer or eagerly loading features.
+  expect(initialScriptBytes).toBeGreaterThan(0);
+  expect(initialScriptBytes).toBeLessThan(150 * 1024);
   await page.getByRole("button", { name: "Chuyển sang nền sáng" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });

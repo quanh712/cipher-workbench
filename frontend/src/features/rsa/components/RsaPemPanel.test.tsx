@@ -15,15 +15,15 @@ const signed: PemResult = {
 function setup() {
   const gateway = { ...createRsaGateway(), standardSignature: vi.fn().mockResolvedValue(signed) };
   const view = render(<RsaPemPanel gateway={gateway} />);
-  fireEvent.change(screen.getByLabelText("Nội dung ký / kiểm tra"), { target: { value: "abc" } });
-  fireEvent.change(screen.getByLabelText("Private key PEM"), { target: { value: "PRIVATE PEM" } });
+  fireEvent.input(screen.getByLabelText("Nội dung ký / kiểm tra"), { target: { value: "abc" } });
+  fireEvent.input(screen.getByLabelText("Private key PEM"), { target: { value: "PRIVATE PEM" } });
   return { gateway, ...view };
 }
 describe("PEM workspace", () => {
   it("signs explicitly, clears secrets, then transfers result for verification", async () => {
     const { gateway } = setup();
     expect(gateway.standardSignature).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByLabelText("Mật khẩu khóa (nếu có)"), {
+    fireEvent.input(screen.getByLabelText("Mật khẩu khóa (nếu có)"), {
       target: { value: "secret" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Ký PEM" }));
@@ -111,7 +111,7 @@ describe("PEM workspace", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Ký PEM" }));
     const signal = gateway.standardSignature.mock.calls[0][2] as AbortSignal;
-    fireEvent.change(screen.getByLabelText("Nội dung ký / kiểm tra"), {
+    fireEvent.input(screen.getByLabelText("Nội dung ký / kiểm tra"), {
       target: { value: "changed" },
     });
     expect(signal.aborted).toBe(true);
@@ -123,7 +123,7 @@ describe("PEM workspace", () => {
 it("keeps the message while clearing secrets and aborting when leaving PEM", async () => {
   const { gateway, rerender } = setup();
   gateway.standardSignature.mockImplementation(() => new Promise(() => {}));
-  fireEvent.change(screen.getByLabelText("Mật khẩu khóa (nếu có)"), {
+  fireEvent.input(screen.getByLabelText("Mật khẩu khóa (nếu có)"), {
     target: { value: "secret" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Ký PEM" }));

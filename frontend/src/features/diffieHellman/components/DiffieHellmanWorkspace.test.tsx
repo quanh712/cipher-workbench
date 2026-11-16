@@ -54,12 +54,12 @@ describe("Diffie–Hellman form", () => {
 
   it("applies the preset and resets without requests", () => {
     const gateway = setup();
-    fireEvent.change(screen.getByRole("textbox", { name: "Số nguyên tố q" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Số nguyên tố q" }), {
       target: { value: "47" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
     expect(screen.getByRole("textbox", { name: "Số nguyên tố q" })).toHaveValue("23");
-    fireEvent.change(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
       target: { value: "7" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Đặt lại" }));
@@ -73,7 +73,7 @@ describe("Diffie–Hellman form", () => {
     (value) => {
       const gateway = setup();
       const input = screen.getByRole("textbox", { name: "Số nguyên tố q" });
-      fireEvent.change(input, { target: { value } });
+      fireEvent.input(input, { target: { value } });
       expect(input).toHaveValue(value); // No silent truncation or numeric coercion.
       fireEvent.click(screen.getByRole("button", { name: "Thiết lập bí mật chung" }));
       expect(screen.getByRole("alert")).toHaveTextContent(
@@ -85,7 +85,7 @@ describe("Diffie–Hellman form", () => {
       );
       expect(input).toHaveFocus();
       expect(gateway.exchange).not.toHaveBeenCalled();
-      fireEvent.change(input, { target: { value: "23" } });
+      fireEvent.input(input, { target: { value: "23" } });
       expect(input).toHaveAttribute("aria-invalid", "false");
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     },
@@ -95,7 +95,7 @@ describe("Diffie–Hellman form", () => {
     const user = userEvent.setup();
     const gateway = setup();
     const input = screen.getByRole("textbox", { name: "Số nguyên tố q" });
-    fireEvent.change(input, { target: { value: " 00023 " } });
+    fireEvent.input(input, { target: { value: " 00023 " } });
     await user.click(input);
     await user.keyboard("{Enter}");
     expect(await screen.findByRole("status", { name: "Trạng thái trao đổi DH" })).toHaveTextContent(
@@ -110,10 +110,10 @@ describe("Diffie–Hellman form", () => {
 
   it("generates both private values even if the current private inputs are invalid", async () => {
     const gateway = setup();
-    fireEvent.change(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
       target: { value: "x" },
     });
-    fireEvent.change(screen.getByRole("textbox", { name: "Số mũ riêng X_B" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Số mũ riêng X_B" }), {
       target: { value: "" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Sinh số mũ ngẫu nhiên" }));
@@ -129,7 +129,7 @@ describe("Diffie–Hellman form", () => {
 
   it("validates public fields for random generation", () => {
     const gateway = setup();
-    fireEvent.change(screen.getByRole("textbox", { name: "Căn nguyên thủy α" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Căn nguyên thủy α" }), {
       target: { value: "1e3" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Sinh số mũ ngẫu nhiên" }));
@@ -186,7 +186,7 @@ describe("Diffie–Hellman form", () => {
     await user.click(screen.getByText("Trace Y_A · 3 bước"));
     expect(gateway.exchange).toHaveBeenCalledTimes(1);
     expect(gateway.generatePrivateValues).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
+    fireEvent.input(screen.getByRole("textbox", { name: "Số mũ riêng X_A" }), {
       target: { value: "15" },
     });
     expect(

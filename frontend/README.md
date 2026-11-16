@@ -6,8 +6,10 @@ xem [README chính](../README.md) và [quy trình deploy](../docs/DEPLOYMENT.md)
 Hai checkout `cipher-workbench-fe` và `cipher-workbench-be` cũ giữ để phục hồi.
 
 Ứng dụng web phục vụ học tập và thực hành mật mã: mã hóa, giải mã, trao đổi khóa,
-ký số và xem các bước xử lý. Frontend dùng React, TypeScript và Vite, kết nối
-Backend thật qua API cùng origin.
+ký số và xem các bước xử lý. Frontend dùng API React với runtime `preact/compat`,
+TypeScript và Vite, kết nối Backend thật qua API cùng origin. Vite và Vitest dùng
+cùng preset Preact để kiểm thử đúng runtime được phát hành. React types được giữ
+để kiểm tra kiểu cho các component và thư viện tương thích.
 
 ## Tính năng
 
