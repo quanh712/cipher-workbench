@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./PrivacyPolicy.css";
 
 const policyHash = "#chinh-sach-bao-mat";
@@ -12,7 +12,9 @@ export function PrivacyPolicy() {
     window.addEventListener("hashchange", update);
     return () => window.removeEventListener("hashchange", update);
   }, []);
-  useEffect(() => {
+  // Establish the native modal/focus state before the browser can process the
+  // next keyboard event (notably Escape immediately after opening the link).
+  useLayoutEffect(() => {
     if (!open) return;
     const element = dialog.current!;
     const previousFocus = document.activeElement;
