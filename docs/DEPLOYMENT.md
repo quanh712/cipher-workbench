@@ -1,9 +1,9 @@
 # Public release: local → dev → staging → main
 
-Ứng dụng public dùng **một Docker image** chứa React đã build và FastAPI, cùng
+Ứng dụng public dùng **một Docker image** chứa frontend đã build và FastAPI, cùng
 origin. Có hai Render Web Service riêng: staging và production. Cả hai dùng Free
 plan, không database, không lưu lịch sử trên server. Lịch sử trên trình duyệt do
-frontend quản lý. Repository và image GHCR đều phải **private**.
+frontend quản lý. Repository GitHub là **public**; image GHCR vẫn phải **private**.
 
 ## Luồng phát hành
 
@@ -34,7 +34,7 @@ Hai workflow deploy dùng concurrency riêng và không hủy deployment đang c
 
 ### GitHub và private GHCR
 
-Repository dự kiến: `quanh712/cipher-workbench`, private. GitHub chỉ cho dispatch
+Repository: `quanh712/cipher-workbench`, public. GitHub chỉ cho dispatch
 workflow có mặt trên default branch. Lần đầu cài workflow lên `main` bằng commit
 thiết lập CI; đây là bước cài tooling, không triển khai ứng dụng. Sau đó merge
 thiết lập đó vào `dev` và `staging`. Giữ `main` làm default branch.
@@ -44,8 +44,8 @@ image đầu tiên. Chế độ này vẫn chạy checks và browser test, chỉ
 không gọi Render và **không tạo artifact đủ điều kiện promote**. Digest xuất hiện
 trong GitHub Actions summary.
 
-GHCR tạo package mới private theo mặc định. Workflow kiểm tra repo private và
-package hiện hữu private trước push, rồi kiểm tra package private sau push. Không
+GHCR tạo package mới private theo mặc định. Workflow cho phép repository public và
+kiểm tra package hiện hữu private trước push, rồi kiểm tra package private sau push. Không
 đổi visibility package sang public. Bật quyền Actions read/write packages cho repo;
 package cần cho phép repository này truy cập qua `GITHUB_TOKEN` nếu quyền không tự
 được kế thừa. Token workflow chỉ có hiệu lực trong job và không dùng làm credential
@@ -154,7 +154,9 @@ gh workflow run production.yml --ref main \
 
 Nếu artifact hết hạn sau 30 ngày, chạy staging lại. Artifact chỉ có digest, revision,
 service/deploy ID, URL và trạng thái test; không chứa source, image hay credentials.
-Artifact nằm trong private GitHub repo, không publish GitHub Pages hoặc image public.
+Log workflow và artifact trong repository public có thể được đọc công khai. Chỉ
+lưu metadata phát hành nêu trên; không đưa credentials, dữ liệu người dùng hoặc
+file cấu hình riêng vào log/artifact. Không publish GitHub Pages hoặc image public.
 
 ## Kiểm tra local
 
@@ -185,8 +187,8 @@ cùng chạy liên tục cả tháng. Staging chỉ chạy khi nghiệm thu, kh�
 ping để giữ thức. Hết quota có thể tạm ngừng cả hai; giám sát usage và băng thông
 trong Dashboard. Xem [Free limits](https://render.com/docs/free).
 
-GitHub Actions private repo cũng có quota minutes/storage; chạy workflow thủ công
-giúp hạn chế build không cần thiết. Xem usage trước khi bật chi tiêu vượt quota.
+GitHub Actions vẫn có giới hạn storage và usage theo tài khoản; chạy workflow thủ
+công giúp hạn chế build không cần thiết. Xem usage trước khi bật chi tiêu vượt quota.
 Không có cam kết uptime hoặc chi phí luôn bằng 0 khi tài khoản vượt mức miễn phí.
 
 Rollback không rebuild tag: chọn digest trước đã nghiệm thu và còn trong GHCR.

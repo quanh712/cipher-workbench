@@ -37,11 +37,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Require private GitHub repository
+      - name: Require private GHCR package
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          test "$(gh api "repos/$GITHUB_REPOSITORY" --jq .private)" = true
           python3 deploy/check-package.py --allow-missing
       - name: Require configured services
         if: ${{ !inputs.bootstrap_only }}

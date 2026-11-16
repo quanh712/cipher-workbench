@@ -1,6 +1,6 @@
 # Cipher Workbench
 
-Private monorepo for the React frontend, FastAPI backend, and manual release pipeline.
+Public monorepo for the React-compatible frontend, FastAPI backend, and manual release pipeline. Deployment images remain private in GHCR.
 
 Educational cryptography workspace for Caesar, Vigenère, Playfair, Affine,
 Columnar Transposition, Hill, DES, RSA, and Diffie–Hellman.
