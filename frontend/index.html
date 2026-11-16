@@ -8,7 +8,37 @@
       content="Mã hóa và giải mã văn bản hoặc file. Chọn thuật toán để bắt đầu với Cipher Workbench."
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <script src="/theme-bootstrap.js"></script>
+    <link
+      rel="preload"
+      href="/fonts/barlow/Barlow-Medium.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/barlow/BarlowCondensed-Bold.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <script>
+      // Apply the saved theme before first paint, without a blocking network request.
+      (function () {
+        let storedTheme;
+        try {
+          storedTheme = window.localStorage.getItem("cipher-workbench-theme");
+        } catch {
+          storedTheme = null;
+        }
+        document.documentElement.dataset.theme =
+          storedTheme === "light" || storedTheme === "dark"
+            ? storedTheme
+            : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+      })();
+    </script>
     <title>Cipher Workbench | Encode and Decode</title>
   </head>
   <body>

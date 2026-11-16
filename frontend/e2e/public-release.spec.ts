@@ -2,6 +2,36 @@ import { expect, test } from "@playwright/test";
 
 const historyKey = "cipher-workbench.history.v1";
 
+test("first paint needs no external stylesheet or theme script and respects saved theme", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.addInitScript(() => {
+    localStorage.setItem("cipher-workbench-theme", "dark");
+  });
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Caesar", exact: true })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  expect(requests.some((url) => /theme-bootstrap\.js|\.css(?:\?|$)/.test(url))).toBe(false);
+  expect(requests.some((url) => /\/(rsaApi|desApi|diffieHellmanApi)-/.test(url))).toBe(false);
+  await page.getByRole("button", { name: "Chuyển sang nền sáng" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+});
+
+test("theme uses system preference when browser storage is unavailable", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.addInitScript(() => {
+    Storage.prototype.getItem = () => {
+      throw new DOMException("Storage unavailable", "SecurityError");
+    };
+  });
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.getByRole("heading", { name: "Caesar", exact: true })).toBeVisible();
+});
+
 test("public build serves UI and APIs without database, cookies, or API-to-SPA fallback", async ({
   page,
   request,

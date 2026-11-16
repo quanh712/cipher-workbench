@@ -4,9 +4,8 @@ import { getHistoryStorageWarning } from "../features/history/services/browserHi
 import { ServerWaitStatus } from "../shared/components/ServerWaitStatus";
 import { useDiffieHellman } from "../features/diffieHellman/hooks/useDiffieHellman";
 import type { DiffieHellmanGateway } from "../features/diffieHellman/services/diffieHellmanGateway";
-import { desApi } from "../features/des/services/desApi";
+import { deferredDesApi, deferredRsaApi } from "./deferredGateways";
 import { useDesCipher } from "../features/des/hooks/useDesCipher";
-import { rsaApi } from "../features/rsa/services/rsaApi";
 import { useRsaCipher } from "../features/rsa/hooks/useRsaCipher";
 import { createDesDemoGateway } from "../features/des/demo/createDesDemoGateway";
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
@@ -76,7 +75,7 @@ const HistoryWorkspace = lazy(() =>
 
 const desGateway =
   import.meta.env.VITE_ENABLE_DES === "true"
-    ? desApi
+    ? deferredDesApi
     : import.meta.env.VITE_ENABLE_DES_DEMO === "true"
       ? createDesDemoGateway()
       : null;
@@ -100,7 +99,7 @@ export function App({
   const [showHistory, setShowHistory] = useState(false);
   const hill = useHillCipher(hillApi, algorithm === "hill" && !showHistory);
   const des = useDesCipher(desGateway, algorithm === "des" && !showHistory);
-  const rsa = useRsaCipher(rsaApi, algorithm === "rsa" && !showHistory);
+  const rsa = useRsaCipher(deferredRsaApi, algorithm === "rsa" && !showHistory);
   const diffieHellman = useDiffieHellman(
     import.meta.env.VITE_ENABLE_DIFFIE_HELLMAN === "true" ? diffieHellmanGateway : null,
     algorithm === "diffie-hellman" && !showHistory,
