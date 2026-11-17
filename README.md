@@ -26,6 +26,11 @@ Work on `feature/*` branches, verify locally, then merge into `dev`. Promote to 
 
 The public image serves both the UI and `/api/*` from one origin. It runs without a database, and uses process-wide resource limits suitable for a small educational demo. This is an educational cryptography tool; its algorithms and demonstrations are not a replacement for production cryptographic protocols.
 
+Public Hill requests are limited to 16 KiB of UTF-8 text to bound per-block trace
+CPU and memory. Other algorithm limits are unchanged. API body uploads have a
+10-second idle timeout and a 30-second total deadline; these limits apply only
+to receiving the body, not to algorithm execution or hosting cold starts.
+
 History is stored only in the current browser, expires after one hour, and does not retain private keys or original uploaded file contents. Clearing site data removes it. Staging and production use different origins and therefore separate browser histories.
 
 ## Local prerequisites
