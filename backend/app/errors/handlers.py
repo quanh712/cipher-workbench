@@ -9,10 +9,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.security_headers import SECURITY_HEADERS
-
 from . import messages
 from .exceptions import AppError, DhError, HillError, RsaError
+from .response_headers import SECURITY_HEADERS
 
 logger = logging.getLogger(__name__)
 

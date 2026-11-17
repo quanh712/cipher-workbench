@@ -6,12 +6,7 @@ import re
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-SECURITY_HEADERS = {
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
-}
+from app.errors.response_headers import SECURITY_HEADERS
 
 
 def frontend_csp(html: str) -> str:
