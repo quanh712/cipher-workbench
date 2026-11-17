@@ -244,10 +244,12 @@ def test_openapi_documents_hill_contract(client: TestClient) -> None:
         assert "oneOf" in request_schema
         assert all(
             variant["properties"]["text"]["description"]
-            == "Tối đa 5 MiB (5.242.880 byte) khi mã hóa UTF-8."
+            == "Tối đa 5 MiB UTF-8; bản public: 16 KiB."
             for variant in request_schema["oneOf"]
         )
-        assert operation["responses"]["413"]["description"] == ("Text Hill vượt giới hạn 5 MiB.")
+        assert operation["responses"]["413"]["description"] == (
+            "Văn bản Hill vượt giới hạn của môi trường triển khai."
+        )
     assert "/api/hill/file" not in schema["paths"]
     components = schema["components"]["schemas"]
     assert "padding" not in components["HillEncryptResponse"]["properties"]
