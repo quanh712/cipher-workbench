@@ -269,3 +269,31 @@ def test_openapi_documents_hill_contract(client: TestClient) -> None:
             "schema": {"type": "integer", "minimum": 2, "maximum": 4},
         }
     ]
+
+
+@pytest.mark.parametrize("operation", ["encrypt", "decrypt"])
+def test_public_hill_budget_before_core(client, monkeypatch, operation):
+    from app.api import routes_hill
+
+    monkeypatch.setattr(app.state, "public_mode", True)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Oversized public input must not reach core")
+
+    monkeypatch.setattr(routes_hill.hill, operation, forbidden)
+    response = client.post(f"/api/hill/{operation}", json={"text": "A" * 16385, "key": T01})
+    body = assert_hill_error(response, 413, "E06")
+    assert body["details"]["maxBytes"] == 16384
+
+
+def test_public_hill_exact_budget_roundtrip(client, monkeypatch):
+    monkeypatch.setattr(app.state, "public_mode", True)
+    text = "A" * 16384
+    response = client.post("/api/hill/encrypt", json={"text": text, "key": T01})
+    assert response.status_code == 200
+    assert len(response.json()["blocks"]) == 8192
+    assert len(response.content) < 512 * 1024
+    decrypted = client.post(
+        "/api/hill/decrypt", json={"text": response.json()["result"], "key": T01}
+    )
+    assert decrypted.json()["result"] == text

@@ -6,6 +6,7 @@ from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, ConfigDict, Field
+from starlette.concurrency import run_in_threadpool
 
 from app.api.hill_schemas import decode, error, validate_key, validate_transform
 from app.api.history_recorder import note_history
@@ -14,6 +15,9 @@ from app.core import hill
 from app.errors.exceptions import HillError as ApiHillError
 
 router = APIRouter(prefix="/api/hill", tags=["Hill"])
+
+# Bound trace amplification before creating per-block dictionaries on public hosts.
+PUBLIC_MAX_TEXT_BYTES = 16 * 1024
 
 Residue = Annotated[int, Field(ge=0, le=25)]
 HillVector = Annotated[list[Residue], Field(min_length=2, max_length=4)]
@@ -186,10 +190,20 @@ async def _transform(request: Request, operation: Literal["encrypt", "decrypt"])
         {"text", "key", "keyword", "m", "options"},
     )
     validated = validate_transform(payload)
+    if request.app.state.public_mode:
+        actual = len((validated.text or "").encode("utf-8"))
+        if actual > PUBLIC_MAX_TEXT_BYTES:
+            raise ApiHillError(
+                413,
+                "E06",
+                "Bản public chỉ xử lý tối đa 16 KiB văn bản Hill. Hãy rút ngắn nội dung.",
+                {"actualBytes": actual, "maxBytes": PUBLIC_MAX_TEXT_BYTES},
+            )
     note_history(request, input_length=len(validated.text or ""))
     try:
         transform = hill.encrypt if operation == "encrypt" else hill.decrypt
-        result = transform(
+        result = await run_in_threadpool(
+            transform,
             validated.text or "",
             validated.matrix,
             options=validated.options,

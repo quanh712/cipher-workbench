@@ -1,3 +1,4 @@
+import { HILL_FILE_HINT } from "../utils/limits";
 import { CipherIntro } from "../../../shared/components/CipherIntro";
 import { CipherAnalysisEmpty } from "../../../shared/components/CipherAnalysisEmpty";
 import { KeyAlignedColumns } from "../../../shared/components/KeyAlignedColumns";
@@ -304,6 +305,7 @@ function InputPanel({ cipher }: { cipher: Controller }) {
               : "Bản mã"
         }
         textAriaLabel="Văn bản đầu vào"
+        fileHint={HILL_FILE_HINT}
         showErrorWithoutInput={cipher.inputType === "file" && Boolean(cipher.fileError)}
         inputType={cipher.inputType}
         mode={cipher.mode}
