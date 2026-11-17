@@ -6,11 +6,15 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
+from app.api.security_headers import frontend_csp
+
 
 def register_frontend(app: FastAPI, directory: str) -> None:
     root = Path(directory).resolve()
     if not (root / "index.html").is_file():
         raise RuntimeError("STATIC_DIR must contain a built frontend index.html")
+
+    csp = frontend_csp((root / "index.html").read_bytes().decode("utf-8"))
 
     @app.get("/{path:path}", include_in_schema=False)
     async def frontend(path: str) -> FileResponse:
@@ -26,7 +30,12 @@ def register_frontend(app: FastAPI, directory: str) -> None:
                 r"assets/(?:[^/]+/)*[^/]+-[A-Za-z0-9_-]{8,}\.(?:js|css)", path
             )
             cache = "public, max-age=31536000, immutable" if fingerprinted else "no-cache"
-            return FileResponse(target, headers={"Cache-Control": cache})
+            return FileResponse(
+                target, headers={"Cache-Control": cache, "Content-Security-Policy": csp}
+            )
         if Path(path).suffix or path.startswith("assets/"):
             raise HTTPException(status_code=404)
-        return FileResponse(root / "index.html", headers={"Cache-Control": "no-cache"})
+        return FileResponse(
+            root / "index.html",
+            headers={"Cache-Control": "no-cache", "Content-Security-Policy": csp},
+        )

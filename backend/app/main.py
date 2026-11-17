@@ -32,6 +32,7 @@ from app.api.routes_history import router as history_router
 from app.api.routes_rsa import router as rsa_router
 from app.api.routes_rsa_signatures import router as rsa_signatures_router
 from app.api.routes_text import router as text_router
+from app.api.security_headers import SecurityHeaders
 from app.db.engine import create_database
 from app.errors.handlers import register_exception_handlers
 from app.history.retention import purge_periodically
@@ -93,6 +94,7 @@ if cors_origins:
         allow_credentials=True,
         expose_headers=["Content-Disposition"],
     )
+app.add_middleware(SecurityHeaders)
 register_exception_handlers(app)
 app.include_router(health_router)
 if not PUBLIC_MODE:

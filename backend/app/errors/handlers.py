@@ -9,6 +9,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.security_headers import SECURITY_HEADERS
+
 from . import messages
 from .exceptions import AppError, DhError, HillError, RsaError
 
@@ -40,6 +42,7 @@ DH_PATHS = frozenset(
 
 def _error_response(status_code: int, message: str) -> JSONResponse:
     return JSONResponse(
+        headers=SECURITY_HEADERS,
         status_code=status_code,
         content={"success": False, "message": message},
     )
@@ -49,6 +52,7 @@ def _rsa_error_response(
     status_code: int, code: str, message: str, field: str | None = None
 ) -> JSONResponse:
     return JSONResponse(
+        headers=SECURITY_HEADERS,
         status_code=status_code,
         content={"success": False, "code": code, "message": message, "field": field},
     )
@@ -80,6 +84,7 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
         return _rsa_error_response(exc.status_code, exc.code, exc.message, exc.field)
     if isinstance(exc, HillError):
         return JSONResponse(
+            headers=SECURITY_HEADERS,
             status_code=exc.status_code,
             content={
                 "success": False,
