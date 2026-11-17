@@ -43,7 +43,7 @@
   --badge-surface: #f4f4f5;
   --solid: #18181b;
   --solid-text: #ffffff;
-  --accent: #e6005c;
+  --accent: #d60055;
   --accent-soft: #ffe2ec;
   --success: #087f5b;
   --success-surface: #ebfbee;
@@ -51,11 +51,11 @@
   --danger: #c92a2a;
   --danger-surface: #fff5f5;
   --danger-border: #ffc9c9;
-  --focus: #00a3d7;
+  --focus: #007496;
   --focus-surface: #effbff;
-  --syntax-upper: #fb015b;
-  --syntax-lower: #d63aff;
-  --syntax-other: #00a3d7;
+  --syntax-upper: #d6004c;
+  --syntax-lower: #a51ac7;
+  --syntax-other: #007496;
   --toast-shadow: rgb(0 0 0 / 14%);
 }
 
@@ -122,7 +122,8 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
-[role="button"]:focus-visible {
+[role="button"]:focus-visible,
+[tabindex="0"]:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
@@ -2089,4 +2090,35 @@ textarea,
 }
 .workspace-error p {
   margin: 0 0 16px;
+}
+
+/* Keep the input focus ring inside the clipped, syntax-highlighted panel. */
+.highlighted-input:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  button,
+  .button,
+  input[type="file"]::file-selector-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  .highlighted-input pre,
+  .highlighted-input textarea {
+    font-size: 16px;
+  }
 }

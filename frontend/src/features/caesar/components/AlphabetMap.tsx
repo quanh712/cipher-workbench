@@ -32,7 +32,7 @@ export function AlphabetMap({ mode, normalizedKey, input }: AlphabetMapProps) {
             Khóa {normalizedKey} · A → {mappedAlphabet[0]}
           </h2>
         </div>
-        <div className="alphabet-map">
+        <div className="alphabet-map" tabIndex={0} role="region" aria-label="Bảng ánh xạ chữ cái">
           <div className="alphabet-row">
             <span className="alphabet-label">{isEncrypting ? "Bản rõ" : "Bản mã"}</span>
             {Array.from(alphabet).map((letter) => (

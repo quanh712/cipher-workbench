@@ -118,6 +118,7 @@ export function PlayfairOutputPanel(props: PlayfairOutputPanelProps) {
         <div
           ref={textPanelRef}
           id={`${id}-text-panel`}
+          tabIndex={0}
           className="playfair-text-panel"
           role="tabpanel"
           aria-labelledby={`${id}-text-tab`}

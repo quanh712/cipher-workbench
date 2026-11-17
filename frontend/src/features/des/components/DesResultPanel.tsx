@@ -79,6 +79,7 @@ export function DesResultPanel({ cipher }: { cipher: DesCipherController }) {
         </div>
         <div
           id={`${id}-text-panel`}
+          tabIndex={0}
           role="tabpanel"
           aria-labelledby={`${id}-text-tab`}
           hidden={view !== "text"}

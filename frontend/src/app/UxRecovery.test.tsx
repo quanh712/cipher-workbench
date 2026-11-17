@@ -49,7 +49,7 @@ it("keeps errors readable until explicitly dismissed", async () => {
   expect(close).not.toHaveBeenCalled();
   expect(screen.getByText("Thử tải lại")).toBeVisible();
 });
-it("preserves results through navigation and resets immediately without confirmation", async () => {
+it("preserves drafts when reset is cancelled and clears them only after confirmation", async () => {
   render(<App />);
   fireEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
   fireEvent.click(screen.getByRole("button", { name: "Mã hóa" }));
@@ -66,7 +66,11 @@ it("preserves results through navigation and resets immediately without confirma
   expect(screen.getByRole("tabpanel", { name: "Văn bản" })).toBeVisible();
   vi.mocked(window.confirm).mockReturnValue(false);
   fireEvent.click(screen.getByRole("button", { name: "Đặt lại tất cả" }));
-  expect(window.confirm).not.toHaveBeenCalled();
+  expect(window.confirm).toHaveBeenCalledOnce();
+  expect(screen.getByRole("textbox", { name: "Nội dung đầu vào" })).toHaveValue("Hello World");
+  expect(screen.getByRole("tabpanel", { name: "Văn bản" })).toBeVisible();
+  vi.mocked(window.confirm).mockReturnValue(true);
+  fireEvent.click(screen.getByRole("button", { name: "Đặt lại tất cả" }));
   expect(screen.getByRole("textbox", { name: "Nội dung đầu vào" })).toHaveValue("");
   expect(screen.queryByText("Khoor Zruog")).not.toBeInTheDocument();
   const unload = new Event("beforeunload", { cancelable: true });

@@ -120,6 +120,12 @@ export function App({
     des.isBusy;
 
   function resetWorkspace() {
+    if (
+      !window.confirm(
+        "Đặt lại tất cả? Văn bản, file, khóa và kết quả đang mở ở mọi thuật toán sẽ bị xóa. Lịch sử thao tác vẫn được giữ. Thao tác này không thể hoàn tác.",
+      )
+    )
+      return;
     setOpened(["caesar"]);
     setResetVersion((n) => n + 1);
     setVerification(undefined);

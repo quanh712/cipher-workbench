@@ -41,7 +41,7 @@ export function AffineMap({ mode, input, validation }: AffineMapProps) {
             {formula} · A → {mapping.mappedAlphabet[0]}
           </h2>
         </div>
-        <div className="alphabet-map">
+        <div className="alphabet-map" tabIndex={0} role="region" aria-label="Bảng ánh xạ chữ cái">
           <div className="alphabet-row">
             <span className="alphabet-label">{mapping.sourceLabel}</span>
             {mapping.sourceAlphabet.map((letter) => (

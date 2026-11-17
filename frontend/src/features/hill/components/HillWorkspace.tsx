@@ -81,11 +81,15 @@ function KeyPanel({ cipher }: { cipher: Controller }) {
   const analysis = cipher.analysis;
   const serverError = analysis.error;
   const data = analysis.status === "valid" ? analysis.data?.result : null;
+  const hasKeyInput =
+    cipher.keyInputMode === "grid"
+      ? cipher.matrix.some((row) => row.some((cell) => cell.trim() !== ""))
+      : cipher.keyword.trim() !== "";
   const keyError =
-    validation.error ??
+    (hasKeyInput ? validation.error : null) ??
     (serverError && ["E03", "E08", "E09"].includes(serverError.code) ? serverError.message : null);
   const badCell =
-    validation.badCell ??
+    (hasKeyInput ? validation.badCell : null) ??
     (serverError?.code === "E03" &&
     typeof serverError.details?.row === "number" &&
     typeof serverError.details?.column === "number"
@@ -256,7 +260,7 @@ function KeyPanel({ cipher }: { cipher: Controller }) {
                 ? "! Khóa chưa hợp lệ. Kiểm tra trường được đánh dấu."
                 : data
                   ? "✓ Khóa khả nghịch modulo 26."
-                  : "Nhập khóa hợp lệ để kiểm tra."}
+                  : "Nhập ma trận, chọn Khóa ngẫu nhiên hoặc Tạo ví dụ để bắt đầu."}
         </div>
       </div>
     </section>

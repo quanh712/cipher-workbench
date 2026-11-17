@@ -31,6 +31,9 @@ describe("Hill workspace", () => {
     for (const input of screen.getAllByRole("textbox", { name: /Khóa hàng/ }))
       expect(input).toHaveValue("");
     expect(gateway.analyze).not.toHaveBeenCalled();
+    expect(screen.queryByText(/Khóa chưa hợp lệ/)).not.toBeInTheDocument();
+    for (const input of screen.getAllByRole("textbox", { name: /Khóa hàng/ }))
+      expect(input).toHaveAttribute("aria-invalid", "false");
     await userEvent.click(screen.getByRole("button", { name: "Tạo ví dụ" }));
     expect(screen.getByRole("textbox", { name: "Văn bản đầu vào" })).toHaveValue("HELP");
     expect(screen.getByRole("textbox", { name: "Khóa hàng 1 cột 1" })).toHaveValue("3");
