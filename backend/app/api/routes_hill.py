@@ -120,7 +120,7 @@ _TRANSFORM_SCHEMA = {
             "properties": {
                 "text": {
                     "type": "string",
-                    "description": "Tối đa 5 MiB (5.242.880 byte) khi mã hóa UTF-8.",
+                    "description": "Tối đa 5 MiB UTF-8; bản public: 16 KiB.",
                 },
                 **variant["properties"],
                 "options": _OPTIONS,
@@ -144,7 +144,7 @@ _ERROR_SCHEMA = {
 }
 _COMMON_ERROR = {"content": {"application/json": {"schema": _ERROR_SCHEMA}}}
 _ERROR_RESPONSES = {
-    413: {"description": "Text Hill vượt giới hạn 5 MiB.", **_COMMON_ERROR},
+    413: {"description": "Văn bản Hill vượt giới hạn của môi trường triển khai.", **_COMMON_ERROR},
     422: {"description": "Dữ liệu Hill không hợp lệ.", **_COMMON_ERROR},
     500: {
         "description": "Lỗi hệ thống; response dùng envelope lỗi chung.",

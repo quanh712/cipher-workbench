@@ -10,7 +10,7 @@ This change addresses SEC-01 through SEC-06 from the security review of revision
 | SEC-05 | Patch frontend tooling and transitive packages within existing manifest ranges | npm audit reports zero findings; frontend unit tests, build and public browser suite |
 | SEC-03 | Add API body idle timeout of 10 seconds and total deadline of 30 seconds | Silent uploads, trickles and disconnects release concurrency slots; a later request succeeds |
 | SEC-04 | Add nosniff, frame denial, referrer and permissions policies; hash frontend bootstrap for enforced CSP | Header tests on shell, API rejection and server errors; Chromium blocks an unauthorized inline script while theme and algorithm loading work |
-| SEC-06 | Pin external workflow actions by full commit SHA; restrict package-write permission to the image job; enable Dependabot action updates | Resolve tags against each upstream repository and review workflow diffs; staging exercises the pinned actions |
+| SEC-06 | Pin external workflow actions by full commit SHA; restrict package-write permission to the image job; enable Dependabot action updates | Resolve tags against each upstream repository and review workflow diffs; actionlint passes; staging exercises the pinned actions |
 
 CSP applies to frontend responses. FastAPI's separate API documentation pages
 keep their existing script policy; shared security headers still apply. CSS inline
