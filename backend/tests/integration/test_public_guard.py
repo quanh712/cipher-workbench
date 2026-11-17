@@ -68,3 +68,61 @@ def test_concurrency_budget_and_release_after_completed_request():
         assert guard.active == 0
 
     asyncio.run(exercise())
+
+
+def test_upload_deadlines_release_slots_and_allow_recovery():
+    async def exercise(trickle):
+        called = False
+
+        async def downstream(scope, receive, send):
+            nonlocal called
+            called = True
+
+        guard = PublicResourceGuard(
+            downstream, max_concurrent=1, body_timeout=0.04, body_idle_timeout=0.02
+        )
+        scope = {"type": "http", "path": "/api/work", "method": "POST"}
+        statuses = []
+
+        async def slow_receive():
+            if trickle:
+                await asyncio.sleep(0.005)
+                return {"type": "http.request", "body": b"a", "more_body": True}
+            await asyncio.Event().wait()
+
+        async def send(message):
+            if message["type"] == "http.response.start":
+                statuses.append(message["status"])
+
+        await asyncio.wait_for(guard(scope, slow_receive, send), timeout=1)
+        assert statuses == [408]
+        assert guard.active == 0
+        assert not called
+
+        async def complete():
+            return {"type": "http.request", "body": b"ok", "more_body": False}
+
+        await guard(scope, complete, send)
+        assert called
+        assert guard.active == 0
+
+    asyncio.run(exercise(False))
+    asyncio.run(exercise(True))
+
+
+def test_disconnect_releases_upload_slot():
+    async def exercise():
+        async def downstream(scope, receive, send):
+            raise AssertionError("Disconnected uploads must not reach the application")
+
+        async def receive():
+            return {"type": "http.disconnect"}
+
+        async def send(message):
+            raise AssertionError("Do not respond after disconnect")
+
+        guard = PublicResourceGuard(downstream)
+        await guard({"type": "http", "path": "/api/work"}, receive, send)
+        assert guard.active == 0
+
+    asyncio.run(exercise())

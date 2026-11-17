@@ -4,6 +4,7 @@ The rate budget is deliberately global: proxy-provided IP headers are untrusted,
 and a Render ingress peer must not be mistaken for an individual browser.
 """
 
+import asyncio
 import time
 
 from starlette.responses import JSONResponse
@@ -19,11 +20,17 @@ class PublicResourceGuard:
         max_bytes: int = 8 * 1024 * 1024,
         requests_per_minute: int = 300,
         max_concurrent: int = 4,
+        body_timeout: float = 30,
+        body_idle_timeout: float = 10,
     ) -> None:
         self.app = app
         self.max_bytes = max_bytes
         self.requests_per_minute = requests_per_minute
         self.max_concurrent = max_concurrent
+        if body_timeout <= 0 or body_idle_timeout <= 0:
+            raise ValueError("Body timeouts must be positive")
+        self.body_timeout = body_timeout
+        self.body_idle_timeout = body_idle_timeout
         self.window_start = time.monotonic()
         self.requests = 0
         self.active = 0
@@ -50,8 +57,21 @@ class PublicResourceGuard:
         try:
             # Bound buffering even if Content-Length is missing, incorrect, or chunked.
             body = bytearray()
+            # Bound both silent uploads and continuous trickles before they hold all slots.
+            deadline = time.monotonic() + self.body_timeout
             while True:
-                message = await receive()
+                remaining = min(self.body_idle_timeout, deadline - time.monotonic())
+                try:
+                    message = await asyncio.wait_for(receive(), timeout=max(0, remaining))
+                except TimeoutError:
+                    await self._reject(
+                        scope,
+                        receive,
+                        send,
+                        408,
+                        "Hết thời gian tải dữ liệu. Vui lòng thử lại.",
+                    )
+                    return
                 if message["type"] == "http.disconnect":
                     return
                 chunk = message.get("body", b"")
