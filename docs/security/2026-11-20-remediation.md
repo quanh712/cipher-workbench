@@ -1,0 +1,11 @@
+# Security remediation — 20 November 2026
+
+Addresses SEC20-01, SEC20-02 and SEC20-03 identified in the 20 November security review, in that order.
+
+1. **Untrusted PEM:** sign and verify run in disposable Python processes. Two concurrent workers, eight-second wall deadline, and Linux CPU/address-space limits (four CPU seconds, 256 MiB). The parent kills and reaps a child before releasing its slot after timeout or cancellation. Secrets travel over stdin, never command-line arguments or logs. Encrypted PEM remains supported, and RSA validation is not skipped. Requests exceeding the budget receive a safe `KEY_RESOURCE_LIMIT` error; temporary worker saturation returns 503.
+2. **Public DES:** 16 KiB plaintext; padded ciphertext up to 16,392 decoded bytes / 32,784 hex characters. JSON and TXT uploads are bounded before core processing. Exact-limit encryption can be decrypted again, including PKCS#7's extra block. Public DES bodies are capped at 256 KiB to bound invalid fields and parser overhead. Non-public limits remain unchanged.
+3. **Classical ciphers:** public text/files capped at 64 KiB and string keys/fields at 2 KiB before normalization. Playfair decrypt accepts 128 KiB ciphertext to preserve exact-limit round trips after filler expansion. Public request bodies capped at 512 KiB (1 MiB for Playfair) to accommodate JSON escaping and multipart framing. Validation and transforms run in the bounded Starlette threadpool; result serialization is bounded by the smaller input budgets. The shared frontend displays and checks the public file/text limits. Non-public retains its previous size limits.
+
+Regression coverage includes encrypted/unencrypted PEM interoperability, terminating timed-out and cancelled workers, worker capacity recovery, public DES exact-limit JSON/file round trips and pre-core rejection, classical pre-validation rejection and an unrelated Caesar request completing while Playfair core is deliberately held in a worker.
+
+These are application budgets, not a substitute for edge protection against distributed traffic. Wall deadlines can reject unusually expensive valid keys; the UI displays the safe error with instructions to use a smaller RSA key or a lower PEM encryption cost. Actual worker termination, rather than just cancelling a thread wait, prevents expensive KDF work from continuing after capacity is released.

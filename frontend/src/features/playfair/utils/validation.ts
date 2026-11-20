@@ -1,3 +1,8 @@
+import {
+  MAX_TEXT_FILE_BYTES,
+  PUBLIC_MODE,
+  publicTextError,
+} from "../../../shared/utils/textFileValidation";
 import type { CipherMode, InputType } from "../../../shared/types/cipher";
 import { validateTextFile } from "../../../shared/utils/textFileValidation";
 
@@ -14,7 +19,9 @@ export function validatePlayfairInput(
   text: string,
   file: File | null,
 ): string | null {
-  if (inputType === "file") return validateTextFile(file);
+  const maximum = MAX_TEXT_FILE_BYTES * (PUBLIC_MODE && mode === "decrypt" ? 2 : 1);
+  if (inputType === "text" && publicTextError(text, maximum)) return publicTextError(text, maximum);
+  if (inputType === "file") return validateTextFile(file, maximum);
   if (text.length === 0) return "Văn bản không được để trống.";
 
   const normalized = normalizePlayfairLetters(text);

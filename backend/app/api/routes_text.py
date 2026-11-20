@@ -3,8 +3,10 @@
 from typing import Literal
 
 from fastapi import APIRouter, Request
+from starlette.concurrency import run_in_threadpool
 
 from app.api.history_recorder import note_history
+from app.api.public_limits import check_classical
 from app.api.schemas import (
     TextCipherRequest,
     TextCipherResponse,
@@ -28,9 +30,10 @@ async def _process_text(
     request: Request, operation: Literal["encrypt", "decrypt"]
 ) -> TextCipherResponse:
     payload = decode_text_request(await request.body(), request.headers.get("content-type"))
-    text, key = validate_text_request(payload)
+    check_classical(request, vars(payload))
+    text, key = await run_in_threadpool(validate_text_request, payload)
     note_history(request, input_length=len(text))
-    result = transform_text(text, key, operation)
+    result = await run_in_threadpool(transform_text, text, key, operation)
     note_history(request, output_length=len(result))
     return TextCipherResponse(success=True, result=result)
 

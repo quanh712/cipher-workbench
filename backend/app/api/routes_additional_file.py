@@ -7,9 +7,11 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.history_recorder import note_history
+from app.api.public_limits import check_classical, read_classical_file
 from app.api.request_size_guard import MultipartCompletionGuard
 from app.api.schemas import (
     MISSING,
@@ -31,7 +33,6 @@ from app.services.file_processing import (
     build_result_filename,
     decode_file_bytes,
     has_allowed_extension,
-    read_limited_bytes,
     result_byte_length,
 )
 
@@ -156,6 +157,7 @@ async def _process_file(
         raise MissingFileError()
 
     form = await request.form()
+    check_classical(request, dict(form))
     raw_response_mode = form.get("response_mode", MISSING)
     parsed_key, parsed_action, parsed_response_mode = validate_additional_file_form_fields(
         key,
@@ -173,7 +175,7 @@ async def _process_file(
     if not has_allowed_extension(file.filename):
         raise UnsupportedFileTypeError()
 
-    raw = await read_limited_bytes(file)
+    raw = await read_classical_file(request, file, parsed_action)
     note_history(request, input_length=len(raw))
     if raw == b"":
         raise EmptyFileError()
@@ -181,13 +183,15 @@ async def _process_file(
     text, had_bom = decode_file_bytes(raw)
     del raw
     if cipher == "playfair":
-        validate_playfair_content(text, parsed_action)
+        await run_in_threadpool(validate_playfair_content, text, parsed_action)
     padding: PaddingInfo | None = None
     if cipher == "playfair" and parsed_action == "decrypt":
-        result, positions, filtered = decrypt_playfair_with_padding(text, parsed_key)
+        result, positions, filtered = await run_in_threadpool(
+            decrypt_playfair_with_padding, text, parsed_key
+        )
         padding = PaddingInfo(count=len(positions), positions=positions, filtered=filtered)
     else:
-        result = transformer(text, parsed_key, parsed_action)
+        result = await run_in_threadpool(transformer, text, parsed_key, parsed_action)
 
     if parsed_response_mode == "content":
         note_history(request, output_length=result_byte_length(result, had_bom))

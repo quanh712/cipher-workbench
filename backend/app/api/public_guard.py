@@ -61,6 +61,10 @@ class PublicResourceGuard:
             request_max = (
                 min(self.max_bytes, 256 * 1024) if path.startswith("/api/des/") else self.max_bytes
             )
+            if path.split("/")[2] in {"caesar", "affine", "columnar", "vigenere", "playfair"}:
+                request_max = min(
+                    request_max, (1024 if path.startswith("/api/playfair/") else 512) * 1024
+                )
             # Bound both silent uploads and continuous trickles before they hold all slots.
             deadline = time.monotonic() + self.body_timeout
             while True:

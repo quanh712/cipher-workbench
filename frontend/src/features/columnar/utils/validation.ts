@@ -1,3 +1,4 @@
+import { publicTextError } from "../../../shared/utils/textFileValidation";
 import type { InputType } from "../../../shared/types/cipher";
 import { validateTextFile } from "../../../shared/utils/textFileValidation";
 
@@ -114,5 +115,6 @@ export function validateColumnarInput(
   text: string,
   file: File | null,
 ): string | null {
+  if (inputType === "text" && publicTextError(text)) return publicTextError(text);
   return inputType === "file" ? validateTextFile(file) : validateColumnarContent(text);
 }

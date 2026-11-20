@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from "react";
 import type { CipherMode, InputType } from "../types/cipher";
+import { TEXT_FILE_HINT } from "../utils/textFileValidation";
 import { formatFileSize } from "../utils/formatFileSize";
 import { ColorizedText } from "./ColorizedText";
 import { HighlightedTextArea } from "./HighlightedTextArea";
@@ -201,9 +202,7 @@ export function CipherInputPanel(props: CipherInputPanelProps) {
                 </button>
                 <small>
                   {props.fileHint ??
-                    (props.metadataOnly
-                      ? "Chỉ hiển thị tên và dung lượng file."
-                      : "Chỉ nhận file .txt UTF-8, tối đa 5 MiB")}
+                    (props.metadataOnly ? "Chỉ hiển thị tên và dung lượng file." : TEXT_FILE_HINT)}
                 </small>
               </div>
             )}

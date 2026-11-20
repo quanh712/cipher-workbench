@@ -27,7 +27,12 @@ Work on `feature/*` branches, verify locally, then merge into `dev`. Promote to 
 The public image serves both the UI and `/api/*` from one origin. It runs without a database, and uses process-wide resource limits suitable for a small educational demo. This is an educational cryptography tool; its algorithms and demonstrations are not a replacement for production cryptographic protocols.
 
 Public Hill requests are limited to 16 KiB of UTF-8 text to bound per-block trace
-CPU and memory. Other algorithm limits are unchanged. API body uploads have a
+CPU and memory. Public DES accepts 16 KiB plaintext and the complete padded ciphertext (32,784
+hex characters). Caesar, Vigenère, Playfair, Affine and Columnar public text/files
+are limited to 64 KiB, with string keys up to 2 KiB; Playfair decrypt accepts 128 KiB ciphertext to accommodate filler expansion. Non-public limits are unchanged.
+RSA PEM operations use at most two disposable processes, with an eight-second
+wall deadline and Linux limits of four CPU seconds and 256 MiB per worker.
+API body uploads have a
 10-second idle timeout and a 30-second total deadline; these limits apply only
 to receiving the body, not to algorithm execution or hosting cold starts.
 

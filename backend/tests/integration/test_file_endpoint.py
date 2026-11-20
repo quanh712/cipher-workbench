@@ -518,11 +518,11 @@ def test_file_read_failure_is_canonical_json(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    async def fail_read(reader: object) -> bytes:
-        del reader
+    async def fail_read(request: object, reader: object) -> bytes:
+        del request, reader
         raise FileReadError()
 
-    monkeypatch.setattr(routes_file, "read_limited_bytes", fail_read)
+    monkeypatch.setattr(routes_file, "read_classical_file", fail_read)
     caplog.set_level("ERROR", logger="app.errors.handlers")
     response = _post_file(client)
 

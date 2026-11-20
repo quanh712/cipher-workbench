@@ -2,7 +2,11 @@ import { useMemo, useRef, useState } from "react";
 import { CipherApiError } from "../../../shared/services/cipherApi";
 import type { CipherMode, InputType, NoticeState } from "../../../shared/types/cipher";
 import { saveBlob } from "../../../shared/utils/download";
-import { MAX_TEXT_FILE_BYTES, readTextFile } from "../../../shared/utils/textFileValidation";
+import {
+  MAX_TEXT_FILE_BYTES,
+  PUBLIC_MODE,
+  readTextFile,
+} from "../../../shared/utils/textFileValidation";
 import { playfairApi } from "../services/playfairApi";
 import type { PlayfairResultSnapshot, ProcessingStatus } from "../types/cipher";
 import { validatePlayfairInput, validatePlayfairKey } from "../utils/validation";
@@ -82,7 +86,7 @@ export function usePlayfairCipher() {
       nextFile &&
       /\.txt$/i.test(nextFile.name) &&
       nextFile.size > 0 &&
-      nextFile.size <= MAX_TEXT_FILE_BYTES;
+      nextFile.size <= MAX_TEXT_FILE_BYTES * (PUBLIC_MODE && mode === "decrypt" ? 2 : 1);
     if (!canRead) return;
     try {
       const content = await readTextFile(nextFile);

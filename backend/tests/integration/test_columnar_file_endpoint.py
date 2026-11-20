@@ -421,11 +421,11 @@ def test_columnar_file_read_failure_uses_canonical_safe_error(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    async def fail_read(reader: object) -> bytes:
-        del reader
+    async def fail_read(request: object, reader: object) -> bytes:
+        del request, reader
         raise FileReadError()
 
-    monkeypatch.setattr("app.api.routes_columnar_file.read_limited_bytes", fail_read)
+    monkeypatch.setattr("app.api.routes_columnar_file.read_classical_file", fail_read)
     caplog.set_level("ERROR", logger="app.errors.handlers")
     response = _post_file(client, content=b"private-content", response_mode="file")
     _assert_error(response, 500, messages.FILE_READ_FAILURE)

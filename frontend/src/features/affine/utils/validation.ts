@@ -1,3 +1,4 @@
+import { publicTextError } from "../../../shared/utils/textFileValidation";
 import type { InputType } from "../../../shared/types/cipher";
 import { validateTextFile } from "../../../shared/utils/textFileValidation";
 
@@ -122,6 +123,7 @@ export function validateAffineInput(
   text: string,
   file: File | null,
 ): string | null {
+  if (inputType === "text" && publicTextError(text)) return publicTextError(text);
   if (inputType === "text") {
     return text.length > 0 ? null : "Văn bản không được để trống.";
   }

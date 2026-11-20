@@ -2,9 +2,11 @@
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, Response
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.history_recorder import note_history
+from app.api.public_limits import check_classical, read_classical_file
 from app.api.request_size_guard import MultipartCompletionGuard
 from app.api.schemas import FileCipherResponse, validate_columnar_file_form
 from app.core.columnar import transform_text
@@ -16,7 +18,6 @@ from app.services.file_processing import (
     build_result_filename,
     decode_file_bytes,
     has_allowed_extension,
-    read_limited_bytes,
     result_byte_length,
 )
 
@@ -109,6 +110,7 @@ _FILE_REQUEST_BODY = {
 async def process_columnar_file(request: Request) -> Response:
     try:
         form = await request.form()
+        check_classical(request, dict(form))
     except ValueError as exc:
         raise InvalidRequestBodyError() from exc
     if request.scope.get(MultipartCompletionGuard.SCOPE_KEY) is not True:
@@ -119,14 +121,14 @@ async def process_columnar_file(request: Request) -> Response:
     if not has_allowed_extension(file.filename):
         raise UnsupportedFileTypeError()
 
-    raw = await read_limited_bytes(file)
+    raw = await read_classical_file(request, file)
     note_history(request, input_length=len(raw))
     if raw == b"":
         raise EmptyFileError()
 
     text, had_bom = decode_file_bytes(raw)
     del raw
-    result = transform_text(text, ranks, action)
+    result = await run_in_threadpool(transform_text, text, ranks, action)
     note_history(request, output_length=result_byte_length(result, had_bom))
 
     if response_mode == "content":

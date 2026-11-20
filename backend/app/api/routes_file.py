@@ -6,9 +6,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.history_recorder import note_history
+from app.api.public_limits import check_classical, read_classical_file
 from app.api.request_size_guard import MultipartCompletionGuard
 from app.api.schemas import MISSING, FileCipherResponse, validate_file_form_fields
 from app.core.caesar import transform_text
@@ -20,7 +22,6 @@ from app.services.file_processing import (
     build_result_filename,
     decode_file_bytes,
     has_allowed_extension,
-    read_limited_bytes,
     result_byte_length,
 )
 
@@ -85,6 +86,7 @@ async def process_file(
     # FastAPI maps an explicit empty form value to this parameter's default.
     # Read the already-cached FormData so omission and an empty value remain distinct.
     form = await request.form()
+    check_classical(request, dict(form))
     raw_response_mode = form.get("response_mode", MISSING)
     parsed_key, parsed_action, parsed_response_mode = validate_file_form_fields(
         key,
@@ -96,14 +98,14 @@ async def process_file(
     if not has_allowed_extension(file.filename):
         raise UnsupportedFileTypeError()
 
-    raw = await read_limited_bytes(file)
+    raw = await read_classical_file(request, file)
     note_history(request, input_length=len(raw))
     if raw == b"":
         raise EmptyFileError()
 
     text, had_bom = decode_file_bytes(raw)
     del raw  # Release the upload buffer before transforming or constructing the response.
-    result = transform_text(text, parsed_key, parsed_action)
+    result = await run_in_threadpool(transform_text, text, parsed_key, parsed_action)
     note_history(request, output_length=result_byte_length(result, had_bom))
 
     if parsed_response_mode == "content":

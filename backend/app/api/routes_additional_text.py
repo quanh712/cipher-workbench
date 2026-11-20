@@ -3,8 +3,10 @@
 from typing import Literal
 
 from fastapi import APIRouter, Request
+from starlette.concurrency import run_in_threadpool
 
 from app.api.history_recorder import note_history
+from app.api.public_limits import check_classical
 from app.api.schemas import (
     PaddingInfo,
     PlayfairDecryptResponse,
@@ -59,7 +61,8 @@ async def _request_fields(
     operation: Literal["encrypt", "decrypt"],
 ) -> tuple[str, str]:
     payload = decode_string_key_request(await request.body(), request.headers.get("content-type"))
-    return validate_additional_text_request(payload, cipher, operation)
+    check_classical(request, vars(payload))
+    return await run_in_threadpool(validate_additional_text_request, payload, cipher, operation)
 
 
 async def _process_vigenere(
@@ -67,7 +70,7 @@ async def _process_vigenere(
 ) -> TextCipherResponse:
     text, key = await _request_fields(request, "vigenere", operation)
     note_history(request, input_length=len(text))
-    result = transform_vigenere(text, key, operation)
+    result = await run_in_threadpool(transform_vigenere, text, key, operation)
     note_history(request, output_length=len(result))
     return TextCipherResponse(success=True, result=result)
 
@@ -75,7 +78,7 @@ async def _process_vigenere(
 async def _encrypt_playfair(request: Request) -> TextCipherResponse:
     text, key = await _request_fields(request, "playfair", "encrypt")
     note_history(request, input_length=len(text))
-    result = transform_playfair(text, key, "encrypt")
+    result = await run_in_threadpool(transform_playfair, text, key, "encrypt")
     note_history(request, output_length=len(result))
     return TextCipherResponse(success=True, result=result)
 
@@ -83,7 +86,7 @@ async def _encrypt_playfair(request: Request) -> TextCipherResponse:
 async def _decrypt_playfair(request: Request) -> PlayfairDecryptResponse:
     text, key = await _request_fields(request, "playfair", "decrypt")
     note_history(request, input_length=len(text))
-    result, positions, filtered = decrypt_playfair_with_padding(text, key)
+    result, positions, filtered = await run_in_threadpool(decrypt_playfair_with_padding, text, key)
     note_history(request, output_length=len(result))
     return PlayfairDecryptResponse(
         success=True,

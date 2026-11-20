@@ -1,3 +1,4 @@
+import { PUBLIC_MODE } from "../../../shared/utils/textFileValidation";
 import { CipherIntro } from "../../../shared/components/CipherIntro";
 import { CipherActions } from "../../../shared/components/CipherActions";
 import { CipherModeSelector } from "../../../shared/components/CipherModeSelector";
@@ -73,6 +74,11 @@ export function PlayfairWorkspace({ cipher }: PlayfairWorkspaceProps) {
       <KeyAlignedColumns alignTo="input">
         <div className="workspace__input-column">
           <CipherInputPanel
+            fileHint={
+              PUBLIC_MODE
+                ? "File .txt UTF-8: mã hóa tối đa 64 KiB, giải mã tối đa 128 KiB bản mã có padding."
+                : undefined
+            }
             inputType={cipher.inputType}
             mode={cipher.mode}
             text={cipher.text}
