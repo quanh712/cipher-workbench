@@ -19,6 +19,7 @@ from app.api.des_schemas import (
     validate_trace,
 )
 from app.api.history_recorder import note_history
+from app.api.public_limits import check_des, check_des_text
 from app.core import des
 from app.errors import messages
 
@@ -96,7 +97,10 @@ _IV = {
     "type": ["string", "null"],
     "description": "16 ký tự hex, bắt buộc khi mode = CBC, bị bỏ qua khi ECB.",
 }
-_TEXT = {"type": "string", "description": "Tối đa 5 MiB (5.242.880 byte) khi mã hóa UTF-8."}
+_TEXT = {
+    "type": "string",
+    "description": "Tối đa 5 MiB; public: 16 KiB bản rõ hoặc 32.784 ký tự HEX.",
+}
 _FORMAT = {"type": "string", "enum": ["text", "hex"], "default": "text"}
 
 
@@ -187,6 +191,8 @@ def decrypt_data(
 async def encrypt_des(request: Request) -> dict[str, Any]:
     payload = decode(await request.body(), request.headers.get("content-type"), ENCRYPT_FIELDS)
     validated = validate_encrypt(payload)
+    check_des_text(request, validated.text, plaintext=getattr(validated, "pad", False))
+    check_des(request, validated.data, plaintext=getattr(validated, "pad", False))
     note_history(request, input_length=len(validated.text))
     result, warnings = await run_in_threadpool(
         encrypt_data, validated.data, validated.key, validated.mode, validated.iv, pad=validated.pad
@@ -207,6 +213,8 @@ async def encrypt_des(request: Request) -> dict[str, Any]:
 async def decrypt_des(request: Request) -> dict[str, Any]:
     payload = decode(await request.body(), request.headers.get("content-type"), DECRYPT_FIELDS)
     validated = validate_decrypt(payload)
+    check_des_text(request, validated.text, plaintext=getattr(validated, "pad", False))
+    check_des(request, validated.data, plaintext=getattr(validated, "pad", False))
     note_history(request, input_length=len(validated.text))
     result, warnings = await run_in_threadpool(
         decrypt_data,

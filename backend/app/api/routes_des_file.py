@@ -11,11 +11,17 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.des_schemas import DesFileForm, map_core_error, validate_file_form
 from app.api.history_recorder import note_history
+from app.api.public_limits import DES_LIMIT_MESSAGE, check_des_text, des_upload_limit, public_mode
 from app.api.request_size_guard import MultipartCompletionGuard
 from app.api.routes_des import DesResponse, decrypt_data, encrypt_data
 from app.core import des
 from app.errors import messages
-from app.errors.exceptions import EmptyFileError, UnsupportedFileTypeError
+from app.errors.exceptions import (
+    DesError,
+    EmptyFileError,
+    FileTooLargeError,
+    UnsupportedFileTypeError,
+)
 from app.services.file_processing import (
     build_attachment_body,
     build_content_disposition,
@@ -116,13 +122,21 @@ async def process_des_file(request: Request) -> Response:
     if not has_allowed_extension(form.file.filename):
         raise UnsupportedFileTypeError()
 
-    raw = await read_limited_bytes(form.file)
+    try:
+        raw = await read_limited_bytes(
+            form.file, des_upload_limit(request, plaintext=form.action == "encrypt")
+        )
+    except FileTooLargeError:
+        if public_mode(request):
+            raise DesError(413, DES_LIMIT_MESSAGE) from None
+        raise
     note_history(request, input_length=len(raw))
     if raw == b"":
         raise EmptyFileError()
 
     text, had_bom = decode_file_bytes(raw)
     del raw
+    check_des_text(request, text, plaintext=form.action == "encrypt")
     result, warnings = await run_in_threadpool(_transform, form, text)
     note_history(request, output_length=result_byte_length(result, had_bom))
 

@@ -1,3 +1,4 @@
+import { DES_FILE_HINT } from "../utils/validation";
 import { CipherIntro } from "../../../shared/components/CipherIntro";
 import { CipherActions } from "../../../shared/components/CipherActions";
 import { useEffect, useRef, useState } from "react";
@@ -183,7 +184,7 @@ export function DesWorkspace({ cipher }: { cipher: DesCipherController }) {
             fileHint={
               cipher.isDemo
                 ? "Loại file và dung lượng sẽ được xác nhận theo API DES."
-                : "Chỉ nhận file .txt UTF-8, tối đa 5 MiB. File encrypt ra HEX; file decrypt luôn trả văn bản."
+                : DES_FILE_HINT
             }
             showErrorWithoutInput
             ariaLabel="Đầu vào DES"

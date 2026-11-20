@@ -57,6 +57,10 @@ class PublicResourceGuard:
         try:
             # Bound buffering even if Content-Length is missing, incorrect, or chunked.
             body = bytearray()
+            # Small DES payloads must not carry megabytes of ignored/invalid fields.
+            request_max = (
+                min(self.max_bytes, 256 * 1024) if path.startswith("/api/des/") else self.max_bytes
+            )
             # Bound both silent uploads and continuous trickles before they hold all slots.
             deadline = time.monotonic() + self.body_timeout
             while True:
@@ -75,7 +79,7 @@ class PublicResourceGuard:
                 if message["type"] == "http.disconnect":
                     return
                 chunk = message.get("body", b"")
-                if len(body) + len(chunk) > self.max_bytes:
+                if len(body) + len(chunk) > request_max:
                     await self._reject(
                         scope, receive, send, 413, "Yêu cầu vượt quá dung lượng cho phép."
                     )
