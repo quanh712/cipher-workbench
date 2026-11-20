@@ -36,6 +36,7 @@ from app.core import rsa, rsa_signatures
 from app.db.engine import app_database
 from app.errors.exceptions import RsaError
 from app.history.signatures import HistoryCapacityError, SignatureRecord, save_signature_history
+from app.services.pem_process import PemCapacityError, PemDeadlineError, run_pem
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/rsa", tags=["RSA signatures"])
@@ -302,16 +303,24 @@ async def _verify_input(request: Request) -> StandardVerifyInput:
 async def sign_standard(request: Request) -> dict[str, Any]:
     value = await _sign_input(request)
     try:
-        signature, public_key_pem = await run_in_threadpool(
-            rsa_signatures.sign_with_public_key,
+        signature_text, public_key_text = await run_pem(
+            "sign",
             value.content,
             value.private_key_pem,
-            value.passphrase,
+            password=value.passphrase.decode("utf-8") if value.passphrase is not None else None,
         )
+    except PemCapacityError:
+        raise error(
+            503, "CAPACITY_EXCEEDED", "Dịch vụ chữ ký đang bận. Vui lòng thử lại."
+        ) from None
+    except PemDeadlineError:
+        raise error(
+            422,
+            "KEY_RESOURCE_LIMIT",
+            "Khóa vượt ngân sách xử lý. Hãy dùng khóa RSA nhỏ hơn hoặc giảm chi phí mã hóa PEM.",
+        ) from None
     except rsa_signatures.RsaSignatureError as exc:
         _core_error(exc)
-    signature_text = rsa_signatures.encode_signature(signature)
-    public_key_text = public_key_pem.decode("ascii")
     digest = hashlib.sha256(value.content).hexdigest()
     result = {
         "mode": "standard",
@@ -343,12 +352,19 @@ async def sign_standard(request: Request) -> dict[str, Any]:
 async def verify_standard(request: Request) -> dict[str, Any]:
     value = await _verify_input(request)
     try:
-        valid = await run_in_threadpool(
-            rsa_signatures.verify_bytes_base64,
-            value.content,
-            value.signature,
-            value.public_key_pem,
+        valid = await run_pem(
+            "verify", value.content, value.public_key_pem, signature=value.signature
         )
+    except PemCapacityError:
+        raise error(
+            503, "CAPACITY_EXCEEDED", "Dịch vụ chữ ký đang bận. Vui lòng thử lại."
+        ) from None
+    except PemDeadlineError:
+        raise error(
+            422,
+            "KEY_RESOURCE_LIMIT",
+            "Khóa vượt ngân sách xử lý. Hãy dùng khóa RSA nhỏ hơn hoặc giảm chi phí mã hóa PEM.",
+        ) from None
     except rsa_signatures.RsaSignatureError as exc:
         _core_error(exc)
     public_key_text = value.public_key_pem.decode("ascii")
