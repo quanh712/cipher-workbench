@@ -277,7 +277,9 @@ def test_openapi_documents_hill_contract(client: TestClient) -> None:
 def test_public_hill_budget_before_core(client, monkeypatch, operation):
     from app.api import routes_hill
 
-    monkeypatch.setattr(app.state, "public_mode", True)
+    # State stores dynamic attributes in this mapping; pytest 9.2 restores only
+    # instance attributes when using setattr, which would delete this flag.
+    monkeypatch.setitem(app.state._state, "public_mode", True)
 
     def forbidden(*args, **kwargs):
         pytest.fail("Oversized public input must not reach core")
@@ -289,7 +291,7 @@ def test_public_hill_budget_before_core(client, monkeypatch, operation):
 
 
 def test_public_hill_exact_budget_roundtrip(client, monkeypatch):
-    monkeypatch.setattr(app.state, "public_mode", True)
+    monkeypatch.setitem(app.state._state, "public_mode", True)
     text = "A" * 16384
     response = client.post("/api/hill/encrypt", json={"text": text, "key": T01})
     assert response.status_code == 200

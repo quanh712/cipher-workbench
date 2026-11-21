@@ -6,7 +6,7 @@ COPY frontend/ ./
 ENV VITE_PUBLIC_MODE=true VITE_ENABLE_HILL=true VITE_ENABLE_DES=true VITE_ENABLE_RSA=true VITE_ENABLE_DIFFIE_HELLMAN=true
 RUN npm run build
 
-FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.9 AS uv
 FROM python:3.12-slim-bookworm AS backend
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
