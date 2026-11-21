@@ -38,7 +38,7 @@ jobs:
         with:
           version: '0.13.9'
           require-checksums: true
-          python-version: '3.12'
+          python-version: '3.12.16'
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
       - run: uv sync --frozen
@@ -48,4 +48,4 @@ jobs:
           uv tool run --from pip-audit==2.10.1 pip-audit -r /tmp/requirements.audit.txt --no-deps --disable-pip --require-hashes --progress-spinner off
       - run: uv run ruff check .
       - run: uv run pytest
-      - run: python -m unittest discover -s ../deploy/tests -v
+      - run: uv run python -m unittest discover -s ../deploy/tests -v
