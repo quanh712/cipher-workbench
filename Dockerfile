@@ -7,14 +7,14 @@ ENV VITE_PUBLIC_MODE=true VITE_ENABLE_HILL=true VITE_ENABLE_DES=true VITE_ENABLE
 RUN npm run build
 
 FROM ghcr.io/astral-sh/uv:0.13.9 AS uv
-FROM python:3.12-slim-bookworm AS backend
+FROM python:3.15-slim-bookworm AS backend
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 WORKDIR /app
 COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --locked --no-dev
 
-FROM python:3.12-slim-bookworm
+FROM python:3.15-slim-bookworm
 ARG GIT_SHA=development
 LABEL org.opencontainers.image.revision=${GIT_SHA}
 ENV GIT_SHA=${GIT_SHA} PUBLIC_MODE=true STATIC_DIR=/app/static PORT=8000 \
