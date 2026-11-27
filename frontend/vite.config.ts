@@ -8,14 +8,22 @@ export default defineConfig(({ mode }) => {
     plugins: [
       preact(),
       {
-        name: "inline-entry-styles",
+        name: "first-paint-assets",
         // The small shared stylesheet is needed for the first paint. Inline only
         // entry CSS; algorithm-specific styles keep their lazy, cacheable chunks.
         transformIndexHtml: {
           order: "post",
           handler(html, context) {
             if (!context.bundle) return html;
-            return html.replace(
+            // Vite reconstructs entry script tags and drops fetchpriority from
+            // index.html. Restore it on async hydration scripts after bundling:
+            // the initial content is already HTML and does not depend on JS.
+            const prioritized = html.replace(/<script\b[^>]*\bsrc="[^"]+"[^>]*>/g, (tag) =>
+              /\basync\b/.test(tag) && /\btype="module"/.test(tag) && !/\bfetchpriority=/.test(tag)
+                ? tag.replace("<script", '<script fetchpriority="low"')
+                : tag,
+            );
+            return prioritized.replace(
               /<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"[^>]*>/g,
               (tag, href: string) => {
                 const asset = context.bundle?.[href.replace(/^\//, "")];

@@ -11,7 +11,29 @@ test("first paint needs no external stylesheet or theme script and respects save
   });
   const requests: string[] = [];
   page.on("request", (request) => requests.push(request.url()));
-  await page.goto("/");
+  // Low-priority hydration is safe only while meaningful content is available
+  // before JavaScript. Hold the scripts to verify that contract in the image.
+  let releaseScripts!: () => void;
+  const scriptsAllowed = new Promise<void>((resolve) => {
+    releaseScripts = resolve;
+  });
+  await page.route("**/assets/*.js", async (route) => {
+    await scriptsAllowed;
+    await route.continue();
+  });
+  try {
+    await page.goto("/", { waitUntil: "commit" });
+    await expect(page.locator(".hero p")).toHaveText(
+      "Chọn thuật toán, nhập văn bản hoặc tải file để bắt đầu.",
+    );
+    await expect(page.getByRole("heading", { name: "Caesar", exact: true })).toBeVisible();
+    const entry = page.locator('script[type="module"][src]');
+    await expect(entry).toHaveAttribute("async", "");
+    await expect(entry).toHaveAttribute("fetchpriority", "low");
+  } finally {
+    releaseScripts();
+  }
+  await page.waitForLoadState("load");
   await expect(page.getByRole("heading", { name: "Caesar", exact: true })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   expect(requests.some((url) => /theme-bootstrap\.js|\.css(?:\?|$)/.test(url))).toBe(false);
