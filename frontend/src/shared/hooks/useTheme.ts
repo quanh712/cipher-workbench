@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 export type Theme = "light" | "dark";
 
@@ -28,11 +28,22 @@ function applyTheme(theme: Theme) {
 }
 
 export function useTheme() {
-  const [preference, setPreference] = useState<Theme | null>(readStoredTheme);
-  const [systemTheme, setSystemTheme] = useState<Theme>(readSystemTheme);
+  // Match the build-time HTML on the first hydration pass. Preact intentionally
+  // preserves existing attributes during hydration, so reading a dark browser
+  // preference in the initializer would leave the toggle's light-theme label.
+  const [preference, setPreference] = useState<Theme | null>(null);
+  const [systemTheme, setSystemTheme] = useState<Theme>("light");
   const theme = preference ?? systemTheme;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // One pre-paint update is intentional: browser preferences cannot be baked
+    // into shared static HTML, and hydration must first match that HTML.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPreference(readStoredTheme());
+    setSystemTheme(readSystemTheme());
+  }, []);
+
+  useLayoutEffect(() => {
     applyTheme(theme);
   }, [theme]);
 
