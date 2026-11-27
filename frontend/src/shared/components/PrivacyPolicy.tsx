@@ -4,7 +4,9 @@ import "./PrivacyPolicy.css";
 const policyHash = "#chinh-sach-bao-mat";
 
 export function PrivacyPolicy() {
-  const [open, setOpen] = useState(() => window.location.hash === policyHash);
+  const [open, setOpen] = useState(
+    () => typeof window !== "undefined" && window.location.hash === policyHash,
+  );
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
